@@ -33,6 +33,7 @@ and `/plugin install supacode@supacode-skills`.)
 |---|---|
 | `/supacode:supacode-cli` | Reference for controlling the Supacode app via its CLI |
 | `/supacode:plan-feature` | Plan a milestone or feature end-to-end with adversarial review |
+| `/supacode:auto` | Fire-and-forget shorthand for `plan-feature <work> --auto` |
 | `/supacode:handoff-plan` | Package a plan for a fresh worktree context; `--launch` automates it |
 | `/supacode:mission` | Propose and launch a wave of parallel work lanes |
 | `/supacode:status` | Dashboard of all lanes; `--reap` cleans up merged, dead ones; `--paint` color-codes the sidebar by verdict |
@@ -73,7 +74,7 @@ to verify the merge, save learnings, and delete the worktree.
 You trust the pipeline for a well-scoped task and just want it done.
 
 ```
-/supacode:plan-feature A4 --auto
+/supacode:auto A4        # shorthand for: /supacode:plan-feature A4 --auto
 ```
 
 Planning, adversarial review, worktree creation, and executor launch all

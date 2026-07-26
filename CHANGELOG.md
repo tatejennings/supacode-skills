@@ -3,6 +3,12 @@
 Notable changes to the `supacode` plugin. Versions track
 `plugins/supacode/.claude-plugin/plugin.json`.
 
+## 0.6.0 — 2026-07-26
+
+- New `auto` skill: `/supacode:auto <work>` — fire-and-forget shorthand,
+  exactly equivalent to `/supacode:plan-feature <work> --auto`. Empty
+  arguments ask instead of inventing a target; other flags pass through.
+
 ## 0.5.0 — 2026-07-26
 
 - `mission`: lanes now **plan in parallel** — one subagent per approved lane
