@@ -26,7 +26,18 @@ claude plugin install supacode@supacode-skills
 (Inside a session the slash-command equivalents are `/plugin marketplace add …`
 and `/plugin install supacode@supacode-skills`.)
 
-Installed skills are namespaced: `/supacode:supacode-cli`.
+## Skills
+
+| Skill | Purpose |
+|---|---|
+| `/supacode:supacode-cli` | Reference for controlling the Supacode app via its CLI |
+| `/supacode:plan-feature` | Plan a milestone or feature end-to-end with adversarial review |
+| `/supacode:handoff-plan` | Package a plan for a fresh worktree context; `--launch` automates it |
+| `/supacode:mission` | Propose and launch a wave of parallel work lanes |
+| `/supacode:status` | Dashboard of all lanes; `--reap` cleans up merged, dead ones |
+| `/supacode:complete-feature` | Close out a merged PR's worktree safely |
+
+The workflow skills' old `/supa-*` names still work as trigger phrases.
 
 ## After editing skills
 

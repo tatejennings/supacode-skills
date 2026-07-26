@@ -1,7 +1,9 @@
 # Migration runbook: `~/.claude/skills/supa-*` → this plugin
 
-Deferred until the other authoring context finishes its skills and the user
-says go. Until then the user-level copies are canonical — do not run this.
+> **Executed 2026-07-26.** All five workflow skills were moved in with the
+> `supa-` prefix dropped (`/supacode:plan-feature` etc.); old names remain as
+> trigger aliases in each description. Kept for reference if more user-level
+> skills ever migrate.
 
 ## 0. Inventory
 
