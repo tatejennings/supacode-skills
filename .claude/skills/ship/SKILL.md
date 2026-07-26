@@ -31,10 +31,10 @@ Report exactly what failed and stop if any check fails.
    (or all commits, if no tag yet) against the top changelog section. Any
    skill change with no corresponding changelog line ⇒ stop and list the gaps.
    Docs-only commits (README, CLAUDE.md, this skill) need no entry.
-6. **README not stale:** if commits since the last tag touched
-   `plugins/supacode/skills/`, confirm the README's skills table and Workflows
-   section reflect them. Drift ⇒ stop and say precisely what looks out of
-   date. (Same check CLAUDE.md requires after any skill edit.)
+6. **Docs not stale:** if commits since the last tag touched
+   `plugins/supacode/skills/`, confirm `README.md`'s skills table and
+   `WORKFLOWS.md` reflect them. Drift ⇒ stop and say precisely what looks out
+   of date. (Same check CLAUDE.md requires after any skill edit.)
 
 ## 2. Commit pending work
 

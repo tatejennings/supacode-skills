@@ -31,8 +31,8 @@ there is no build step.
 2. Bump `version` in `plugins/supacode/.claude-plugin/plugin.json`.
 3. Add an entry to `CHANGELOG.md` under the new version — what changed and
    why, per skill.
-4. Check `README.md` for drift: the Skills table (new/renamed skills, changed
-   one-line purposes) and the Workflows section (does the behavior described
+4. Check the docs for drift: `README.md`'s skills table (new/renamed skills,
+   changed one-line purposes) and `WORKFLOWS.md` (does the described behavior
    still match — flags, defaults, what asks vs. defers, what gets launched).
 5. Publish it yourself — run both:
    `claude plugin marketplace update supacode-skills` (refreshes the catalog)
