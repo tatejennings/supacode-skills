@@ -1,0 +1,14 @@
+{
+  "name": "supacode-skills",
+  "description": "Skills for driving the Supacode app from Claude Code — CLI control of worktrees/tabs/sessions and the plan → implement → verify → PR feature workflow.",
+  "owner": {
+    "name": "Tate Jennings"
+  },
+  "plugins": [
+    {
+      "name": "supacode",
+      "source": "./plugins/supacode",
+      "description": "Skills for driving the Supacode app from a Claude context — worktree/tab/session control via the supacode CLI, plus the plan → implement → verify → PR workflow skills."
+    }
+  ]
+}
