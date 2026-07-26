@@ -3,6 +3,16 @@
 Notable changes to the `supacode` plugin. Versions track
 `plugins/supacode/.claude-plugin/plugin.json`.
 
+## 0.4.0 — 2026-07-26
+
+- `status`: new `--paint` flag — tints each lane's Supacode sidebar entry by
+  verdict (blue working, purple pr-open, teal/green merged, orange stalled,
+  red needs-attention) and marks its title with a compact state glyph
+  (`⇧#42`, `✓#42`, `⏸`, `⚠`), turning the sidebar into a live dashboard.
+  Idempotent and loop-safe; composes with `--reap` (reap first, paint
+  survivors); never touches worktrees outside the lane set; painting
+  failures are cosmetic and never affect verdicts or reaping.
+
 ## 0.3.1 — 2026-07-26
 
 - `plan-feature`: `--auto` mode now decides a fork alone only on an

@@ -35,7 +35,7 @@ and `/plugin install supacode@supacode-skills`.)
 | `/supacode:plan-feature` | Plan a milestone or feature end-to-end with adversarial review |
 | `/supacode:handoff-plan` | Package a plan for a fresh worktree context; `--launch` automates it |
 | `/supacode:mission` | Propose and launch a wave of parallel work lanes |
-| `/supacode:status` | Dashboard of all lanes; `--reap` cleans up merged, dead ones |
+| `/supacode:status` | Dashboard of all lanes; `--reap` cleans up merged, dead ones; `--paint` color-codes the sidebar by verdict |
 | `/supacode:complete-feature` | Close out a merged PR's worktree safely |
 
 The workflow skills' old `/supa-*` names still work as trigger phrases.
@@ -112,6 +112,12 @@ reported instead of touched, which is what makes looping it safe.
 Run it any time — after lunch, after merging a few PRs, after a crash — to
 see where every lane stands. It derives everything from `git`/`gh`/`supacode`
 live, so it's accurate even if sessions died or you merged things manually.
+
+Add `--paint` and the verdicts also land in Supacode's sidebar — each lane
+tinted by state (blue working, purple PR-open, green merged, orange stalled,
+red needs attention) with a compact marker in its title (`✓#42`, `⚠`). Loop
+it with `--reap --paint` and the sidebar stays current while finished lanes
+clean themselves up.
 
 ### Driving the app directly
 

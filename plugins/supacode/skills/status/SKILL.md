@@ -1,6 +1,6 @@
 ---
 name: status
-description: Dashboard of every Supacode worktree "lane" for the current repo - branch, PR state, session liveness, clean/dirty, and a per-lane verdict (working, pr-open, merged-reapable, merged-live, stalled, needs-attention). With --reap it also deletes merged, clean, session-dead lanes after strict safety checks - non-interactive and conservative by construction, so wrapping it in a loop is safe. Use when the user says "/supacode:status", "/supacode:status --reap", "how are the lanes doing", "status of my worktrees", "any lanes to clean up", "reap merged worktrees", or sets up "/loop 15m /supacode:status --reap". Formerly /supa-status - the old name still refers to this skill.
+description: Dashboard of every Supacode worktree "lane" for the current repo - branch, PR state, session liveness, clean/dirty, and a per-lane verdict (working, pr-open, merged-reapable, merged-live, stalled, needs-attention). With --reap it also deletes merged, clean, session-dead lanes after strict safety checks - non-interactive and conservative by construction, so wrapping it in a loop is safe. With --paint it tints each lane's Supacode sidebar entry by verdict and marks its title, turning the sidebar itself into a live dashboard. Use when the user says "/supacode:status", "/supacode:status --reap", "/supacode:status --paint", "how are the lanes doing", "status of my worktrees", "any lanes to clean up", "reap merged worktrees", "color-code my worktrees", "paint the lanes", or sets up "/loop 15m /supacode:status --reap --paint". Formerly /supa-status - the old name still refers to this skill.
 ---
 
 # Lane Status (+ Reap)
@@ -15,6 +15,10 @@ finished. Reap is **strictly non-interactive**: every ambiguous case is
 reported, never deleted, and never prompts. That is what makes
 `/loop 15m /supacode:status --reap` safe — deletion requires ALL checks to pass;
 anything else degrades to a report line.
+
+With `--paint` in `$ARGUMENTS`, additionally write each lane's verdict into
+the Supacode sidebar (§6) so lane health is visible without running the skill.
+Both flags compose: `--reap --paint` reaps first, then paints the survivors.
 
 ## 0. Repo identity
 
@@ -144,3 +148,38 @@ If all five hold, in this order:
 
 Report per candidate: reaped, or skipped with the exact failed check. Any
 failed check ⇒ skip, no prompt, no retry — the next run will see it again.
+
+## 6. `--paint` — the sidebar as dashboard
+
+For every lane in the final lane set (after any reaping), write its verdict
+into the Supacode sidebar:
+
+    supacode worktree appearance -w <id> --color <color> --title "<title>"
+
+using the exact ID string from `worktree list`. Verdict → appearance:
+
+| Verdict | `--color` | `--title` |
+|---|---|---|
+| `working` | `blue` | `<lane>` |
+| `pr-open` | `purple` | `<lane> ⇧#<pr>` |
+| `merged-live` | `teal` | `<lane> ✓#<pr>` |
+| `merged-reapable` | `green` | `<lane> ✓#<pr>` |
+| `stalled` | `orange` | `<lane> ⏸` |
+| `needs-attention` (incl. `unknown`) | `red` | `<lane> ⚠` |
+
+`<lane>` is the worktree folder name. Rules:
+
+- **Repaint everything, every run** — appearance is a pure function of the
+  current verdict, so stale colors self-heal and the flag is loop-safe
+  (`/loop 15m /supacode:status --reap --paint`). Setting `--title` each time
+  also overwrites any marker from a previous verdict.
+- **Never paint anything outside the lane set** — not the primary checkout,
+  not other repos' worktrees, not orphans (their worktree is gone anyway).
+  The user's own titles/colors on non-lane worktrees are theirs.
+- **Painting is cosmetic and non-fatal**: an `appearance` failure downgrades
+  that lane to a report line ("paint failed: <error>") and never affects
+  verdicts, reaping, or the exit report. Never let painting abort the scan.
+- Reaped lanes need no cleanup — deletion removes the sidebar entry with the
+  worktree.
+- The sidebar shows last-run state, not live truth — the report remains the
+  authoritative output; git/gh remain the source of verdicts.
