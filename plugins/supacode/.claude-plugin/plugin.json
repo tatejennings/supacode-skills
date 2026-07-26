@@ -1,9 +1,8 @@
 {
   "name": "supacode",
   "description": "Control the Supacode app from Claude: worktrees, tabs, surfaces, scripts, and session launching via the supacode CLI, plus feature-workflow skills.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": {
-    "name": "Tate Jennings",
-    "email": "tatejennings@gmail.com"
+    "name": "Tate Jennings"
   }
 }

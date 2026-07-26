@@ -12,18 +12,19 @@ verify → PR workflow.
 plugins/supacode/                    # the single "supacode" plugin
   .claude-plugin/plugin.json         # plugin identity + version
   skills/<skill-name>/SKILL.md       # one folder per skill
-docs/MIGRATION.md                    # runbook for moving ~/.claude/skills/supa-* in here
 ```
 
 ## Install
 
 ```bash
-# one-time: register this repo as a marketplace, then install the plugin
-claude plugin marketplace add /Users/tate/Documents/Projects/supacode-skills
+# from a local clone:
+git clone <this-repo-url> supacode-skills
+claude plugin marketplace add ./supacode-skills
 claude plugin install supacode@supacode-skills
 ```
 
-(Inside a session the slash-command equivalents are `/plugin marketplace add …`
+(`claude plugin marketplace add` also accepts a GitHub `owner/repo` directly.
+Inside a session the slash-command equivalents are `/plugin marketplace add …`
 and `/plugin install supacode@supacode-skills`.)
 
 ## Skills

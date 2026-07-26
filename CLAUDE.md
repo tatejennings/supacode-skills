@@ -30,11 +30,9 @@ there is no build step.
 3. Remind the user to run `/plugin marketplace update supacode-skills`
    (or `/reload-plugins` mid-session) — local marketplaces do not auto-refresh.
 
-## Migration status
+## Naming
 
-Done (2026-07-26). The workflow skills (`plan-feature`, `handoff-plan`,
-`complete-feature`, `status`, `mission`) now live in this plugin — the old
-`~/.claude/skills/supa-*` copies are gone, and the `supa-` prefix was dropped
-in favor of the plugin namespace (`/supacode:plan-feature`). Each description
-keeps its former `/supa-*` name as a trigger alias; preserve those when
-editing descriptions.
+Skills are invoked through the plugin namespace (`/supacode:plan-feature`),
+so skill names carry no `supa-` prefix. The workflow skills' descriptions end
+with a "Formerly /supa-<name>" trigger alias from their pre-plugin life —
+preserve those aliases when editing descriptions.
