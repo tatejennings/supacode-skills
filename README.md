@@ -1,9 +1,25 @@
 # supacode-skills
 
-A local Claude Code **plugin marketplace** for skills that drive the
-[Supacode](https://supacode.app) macOS app — letting a Claude context create
-worktrees, launch sessions, run scripts, and manage the plan → implement →
-verify → PR workflow.
+A Claude Code **plugin marketplace** for skills that drive
+[Supacode](https://supacode.sh) — letting a Claude session create worktrees,
+launch other Claude sessions, run scripts, and manage the plan → implement →
+verify → PR workflow across parallel lanes of work.
+
+> **Requires [Supacode](https://supacode.sh)** — a macOS app that manages git
+> repositories as sets of worktrees, each with its own terminal tabs. These
+> skills drive it through its `supacode` CLI, so they only work when Claude
+> Code is running inside a Supacode terminal. Without the app installed there
+> is nothing for them to control: the skills detect its absence and stop
+> rather than half-working, and you'd get more out of plain `git worktree`
+> and Claude Code on their own.
+
+## Requirements
+
+- **[Supacode](https://supacode.sh)** (macOS), with Claude Code running in one
+  of its terminal tabs. The `supacode` CLI ships inside the app.
+- **[Claude Code](https://claude.com/claude-code)** with plugin support.
+- **[`gh`](https://cli.github.com)**, authenticated — the workflow skills read
+  PR state and open pull requests with it.
 
 ## Layout
 

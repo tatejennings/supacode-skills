@@ -3,6 +3,13 @@
 Notable changes to the `supacode` plugin. Versions track
 `plugins/supacode/.claude-plugin/plugin.json`.
 
+## 0.7.1 — 2026-07-26
+
+- Docs: state the Supacode dependency up front — README requirement notice
+  and Requirements section, and the plugin/marketplace descriptions now say
+  the app is required. Corrected the Supacode link to https://supacode.sh
+  and added it as the plugin `homepage`.
+
 ## 0.7.0 — 2026-07-26
 
 - `plan-feature`: when a milestone **links to a plan markdown file** with
