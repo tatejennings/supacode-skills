@@ -27,7 +27,12 @@ there is no build step.
 
 1. `claude plugin validate .` from the repo root.
 2. Bump `version` in `plugins/supacode/.claude-plugin/plugin.json`.
-3. Remind the user to run `/plugin marketplace update supacode-skills`
+3. Add an entry to `CHANGELOG.md` under the new version — what changed and
+   why, per skill.
+4. Check `README.md` for drift: the Skills table (new/renamed skills, changed
+   one-line purposes) and the Workflows section (does the behavior described
+   still match — flags, defaults, what asks vs. defers, what gets launched).
+5. Remind the user to run `/plugin marketplace update supacode-skills`
    (or `/reload-plugins` mid-session) — local marketplaces do not auto-refresh.
 
 ## Naming
