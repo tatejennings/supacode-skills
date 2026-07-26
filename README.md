@@ -152,3 +152,6 @@ Local marketplaces do **not** auto-refresh. After changing anything here:
 - Test without installing: `claude --plugin-dir ./plugins/supacode` (overrides
   the installed copy for that session).
 - Validate before committing: `claude plugin validate .`
+- Releasing (maintainers): `/ship` — a project-level skill in `.claude/skills/`
+  that checks the version, changelog, and README agree, then tags and creates
+  a GitHub release from the changelog entry.

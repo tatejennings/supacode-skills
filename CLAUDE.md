@@ -7,6 +7,8 @@ there is no build step.
 ## Where things go
 
 - New skills: `plugins/supacode/skills/<skill-name>/SKILL.md` (folder + one file).
+- Skills about maintaining *this repo* (not shipped to users) live in
+  `.claude/skills/` — e.g. `/ship`, which cuts a GitHub release.
 - Marketplace catalog: `.claude-plugin/marketplace.json` (repo root).
 - Plugin identity/version: `plugins/supacode/.claude-plugin/plugin.json`.
 - Skills are invoked namespaced: `/supacode:<skill-name>`.
@@ -38,6 +40,9 @@ there is no build step.
    installed copy). Local marketplaces do not auto-refresh, and the first
    command alone does NOT update the installed plugin. Then tell the user the
    change applies to new sessions (existing ones need `/reload-plugins`).
+
+Publishing (above) makes a change live **locally**. Releasing it to GitHub is
+a separate, explicit step the user asks for: `/ship` (see `.claude/skills/ship`).
 
 ## Naming
 
