@@ -85,9 +85,16 @@ Use exactly these sections (they match what `/supacode:handoff-plan` packages):
 
 Where a real trade-off needs the user's call, use AskUserQuestion **before**
 finalizing; where a conventional default exists, decide it yourself and record it
-under Decisions. In `--auto` mode, don't ask — pick the conventional default and
-record it; if a fork is genuinely too consequential to default, that disqualifies
-auto-launch (see step 5).
+under Decisions. In `--auto` mode, don't ask — and hold a high bar for deciding
+alone: proceed on a fork only when one option is **overwhelmingly recommended**
+— the codebase's own conventions, the requirements, and standard practice all
+point the same way, and choosing wrong would be cheap to reverse. Record it
+under Decisions with the rationale. Anything less — competing options with real
+trade-offs, information you looked for and could not find, or a choice that
+would be expensive to undo — is a fork you don't own: defer rather than guess
+(see step 5). Deferring on honest uncertainty is a correct outcome of this
+skill, not a failure; a plausible-but-wrong guess costs an entire executor run,
+while a deferral costs one interactive question.
 
 ## 4. Adversarial review
 
@@ -145,7 +152,9 @@ Auto-launch is DISQUALIFIED — stop and present to the user instead — when an
 these hold:
 
 - the adversarial review says split (never auto-launch a multi-context chain);
-- an unresolved trade-off genuinely needs the user's call;
+- any fork lacked an overwhelming recommendation (step 3's bar) — never launch
+  on a guess; state the open question(s) as the disqualification reason so an
+  interactive session can pick up exactly there;
 - the work appears already in flight elsewhere;
 - the review's cross-lane axis found real overlap with a sibling plan
   (`--siblings`);

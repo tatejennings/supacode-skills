@@ -85,7 +85,10 @@ plan, and review stay out of the mission context, which is what lets a wave of
 3 fit in one session.
 
 - A lane that comes back `disqualified` is marked **deferred** with its
-  reason; continue with the remaining lanes — never stall the wave.
+  reason; continue with the remaining lanes — never stall the wave. Deferral
+  is a designed outcome, not a failure: a subagent that defers on a real open
+  question did its job, and one that guesses to avoid deferring did not.
+  Never re-run a deferred lane hoping for a different answer.
 - Serial, not parallel: later lanes must receive earlier lanes' plan paths as
   siblings, and worktree creation fetches a fresh base each time.
 
