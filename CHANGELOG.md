@@ -3,6 +3,16 @@
 Notable changes to the `supacode` plugin. Versions track
 `plugins/supacode/.claude-plugin/plugin.json`.
 
+## 0.7.2 — 2026-07-26
+
+- Docs: the README skills table now has a "What you see in Supacode" column —
+  worktrees and sessions created, the sidebar painted, worktrees deleted — so
+  the benefit is visible without reading a skill. Workflow walkthroughs moved
+  to `WORKFLOWS.md`, maintainer steps to `CONTRIBUTING.md`.
+- Skill descriptions state their Supacode-visible outcome (new worktree +
+  session, several lanes at once, worktree removal), which also broadens
+  triggering on phrasings like "run this in a new worktree".
+
 ## 0.7.1 — 2026-07-26
 
 - Docs: state the Supacode dependency up front — README requirement notice

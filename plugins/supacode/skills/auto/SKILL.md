@@ -1,6 +1,6 @@
 ---
 name: auto
-description: Fire-and-forget shorthand - plan a milestone/feature/bug and launch its executor lane in one shot, no approval gates. Exactly equivalent to /supacode:plan-feature <work> --auto. Use when the user says "/supacode:auto A4", "/supacode:auto fix the vent bug", "just do X", "auto-plan X", "plan and launch X", "fire and forget X", or names work they want handled end-to-end without reviewing the plan first.
+description: Fire-and-forget shorthand - plan a milestone/feature/bug and launch it in one shot, no approval gates, ending with a new Supacode worktree and a Claude session already implementing it. Exactly equivalent to /supacode:plan-feature <work> --auto. Use when the user says "/supacode:auto A4", "/supacode:auto fix the vent bug", "just do X", "auto-plan X", "plan and launch X", "fire and forget X", or names work they want handled end-to-end without reviewing the plan first.
 ---
 
 # Auto

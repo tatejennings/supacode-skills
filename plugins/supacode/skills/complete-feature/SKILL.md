@@ -1,6 +1,6 @@
 ---
 name: complete-feature
-description: Close out a finished piece of work after its PR has been merged - verifies the PR is actually merged and the worktree is clean, saves any durable session learnings to memory, prints a close-out summary, then deletes the current Supacode worktree if (and only if) every safety check passes. Use when the user says "/supacode:complete-feature", "the PR is merged, clean up", "close out this feature", or "wrap up and delete this worktree". Formerly /supa-complete-feature - the old name still refers to this skill.
+description: Close out a finished piece of work after its PR has been merged, removing its Supacode worktree and tab - verifies the PR is actually merged, that nothing uncommitted or unpushed would be lost, saves any durable session learnings to memory, prints a close-out summary, then deletes the current worktree if (and only if) every safety check passes. Use when the user says "/supacode:complete-feature", "the PR is merged, clean up", "close out this feature", or "wrap up and delete this worktree". Formerly /supa-complete-feature - the old name still refers to this skill.
 ---
 
 # Complete Feature

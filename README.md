@@ -45,17 +45,24 @@ and `/plugin install supacode@supacode-skills`.)
 
 ## Skills
 
-| Skill | Purpose |
-|---|---|
-| `/supacode:supacode-cli` | Reference for controlling the Supacode app via its CLI |
-| `/supacode:plan-feature` | Plan a milestone or feature end-to-end with adversarial review; adopts a pre-written plan if the milestone links to one; `--auto` skips the approval gate and launches the executor lane |
-| `/supacode:auto` | Fire-and-forget shorthand for `plan-feature <work> --auto` |
-| `/supacode:handoff-plan` | Package a plan for a fresh worktree context; `--launch` automates it |
-| `/supacode:mission` | Propose and launch a wave of parallel work lanes |
-| `/supacode:status` | Dashboard of all lanes; `--reap` cleans up merged, dead ones; `--paint` color-codes the sidebar by verdict |
-| `/supacode:complete-feature` | Close out a merged PR's worktree safely |
+The point of all of this: work that would otherwise occupy your session —
+research, planning, implementing, reviewing — gets pushed into **separate
+worktrees running their own Claude sessions**, in parallel, while your main
+session stays free. These skills create those lanes, keep them honest, show
+you their state, and clean them up.
 
-The workflow skills' old `/supa-*` names still work as trigger phrases.
+| Skill | What it does | What you see in Supacode |
+|---|---|---|
+| `/supacode:plan-feature` | Researches the codebase and docs with parallel agents, drafts an execution-ready plan, then has a cold-reader agent attack it for gaps, feasibility, and blast radius. Adopts your own plan file if the milestone links to one. | Nothing yet — planning only. With `--auto`, continues straight into the handoff below. |
+| `/supacode:auto` | Shorthand for `plan-feature <work> --auto`: plan, review, and launch in one shot, no approval gate. | A new worktree and a running session, as below. |
+| `/supacode:handoff-plan` | Writes the plan and an executor contract to disk, then starts a Claude session that implements it, self-reviews, and opens a PR — never merging. | **A new worktree** on its own branch, with **a new tab** running Claude in it, named after the work and reachable from your phone via Remote Control. |
+| `/supacode:mission` | Finds the next ready milestones, plans every approved one **concurrently**, checks the finished plans against each other for file collisions, then launches the survivors. | **Several worktrees and sessions at once** — one lane per milestone, each implementing independently. |
+| `/supacode:status` | Rebuilds the truth from `git`/`gh`/`supacode` every run — branch, PR state, whether the session is alive, and a verdict per lane. `--reap` deletes provably-finished lanes; `--paint` writes verdicts into the UI. | A dashboard table, plus (with `--paint`) **your sidebar tinted by state** — green merged, purple PR-open, red needs-attention — and finished worktrees **disappearing** as they're reaped. |
+| `/supacode:complete-feature` | Run inside a lane after you merge its PR: verifies the merge, checks nothing unpushed would be lost, saves what it learned to memory. | **The worktree and its tab vanish** — the last thing it does is delete itself. |
+| `/supacode:supacode-cli` | The CLI reference the others build on; also handles one-off requests directly. | Whatever you asked for — a worktree, a split pane, a script started or stopped. |
+
+Every lane ends at an open PR: **nothing in this pipeline ever merges.** The
+workflow skills' old `/supa-*` names still work as trigger phrases.
 
 ## Workflows
 
