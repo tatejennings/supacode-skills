@@ -3,6 +3,20 @@
 Notable changes to the `supacode` plugin. Versions track
 `plugins/supacode/.claude-plugin/plugin.json`.
 
+## 0.5.0 — 2026-07-26
+
+- `mission`: lanes now **plan in parallel** — one subagent per approved lane
+  runs `plan-feature --auto --plan-only` concurrently, then a single
+  reviewer checks the finished plans against each other for real collisions,
+  then survivors launch serially (fresh-base fetch per worktree). Collision
+  losers are deferred, keeping the lane the user approved first.
+- `plan-feature`: new `--plan-only` modifier (with `--auto`) — full research,
+  draft, and adversarial review, but preps the handoff files instead of
+  launching.
+- `handoff-plan`: new `--prep` mode (save plan + prompt files, launch
+  nothing) and `--launch <plan-file-path>` variant to launch a previously
+  prepped lane.
+
 ## 0.4.0 — 2026-07-26
 
 - `status`: new `--paint` flag — tints each lane's Supacode sidebar entry by

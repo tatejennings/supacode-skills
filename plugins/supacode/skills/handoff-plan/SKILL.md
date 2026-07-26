@@ -1,6 +1,6 @@
 ---
 name: handoff-plan
-description: Package the plan developed in this conversation into a handoff prompt for a fresh context (usually a new worktree). Saves the plan to a file and prints a copy-paste prompt telling the new context to execute the plan on a new branch, commit as it goes, run a low-effort code review, open a PR once review and tests pass (never merging it), and end with a final summary. With --launch (inside Supacode), it also creates the worktree via the supacode CLI and starts the Claude session there automatically with Remote Control enabled. Use when the user says "/supacode:handoff-plan", "hand this off", "write a handoff prompt", or "package this plan for another context". Formerly /supa-handoff-plan - the old name still refers to this skill.
+description: Package the plan developed in this conversation into a handoff prompt for a fresh context (usually a new worktree). Saves the plan to a file and prints a copy-paste prompt telling the new context to execute the plan on a new branch, commit as it goes, run a low-effort code review, open a PR once review and tests pass (never merging it), and end with a final summary. With --launch (inside Supacode), it also creates the worktree via the supacode CLI and starts the Claude session there automatically with Remote Control enabled; --launch can also take an existing plan-file path to launch a previously prepped lane. With --prep it saves the plan and prompt files but launches nothing, for callers like /supacode:mission that plan in parallel and launch later. Use when the user says "/supacode:handoff-plan", "hand this off", "write a handoff prompt", or "package this plan for another context". Formerly /supa-handoff-plan - the old name still refers to this skill.
 ---
 
 # Plan Handoff
@@ -16,8 +16,14 @@ The plan is whatever was agreed in this conversation (including an approved
 plan-mode plan). If no concrete plan exists yet, say so and stop — never invent one.
 
 If `$ARGUMENTS` is given, treat it as the slug and/or extra instructions to fold
-into the handoff. If it contains `--launch`, follow the **Launch mode** section
-at the end instead of stopping after printing the prompt.
+into the handoff. Mode flags:
+
+- `--launch` — follow the **Launch mode** section at the end instead of
+  stopping after printing the prompt. If `--launch` is followed by an
+  absolute path to an *existing* plan file (a lane prepped earlier), skip
+  steps 1–2 and launch from that file.
+- `--prep` — follow the **Prep mode** section: save the files, launch
+  nothing.
 
 ### 2. Save the plan to a file
 
@@ -92,6 +98,15 @@ Below the code block, tell the user:
   `git worktree add ../<repo-name>-<slug> -b <branch> main`
   (adjust the base branch to the repo's default).
 
+## Prep mode (`--prep`)
+
+For callers (like /supacode:mission) that plan now and launch later. Do
+steps 1–2 (collect and save the plan), then also write the filled-in handoff
+prompt (step 3's template) to the sibling file
+`~/.claude/plans/<repo-name>/<YYYY-MM-DD>-<slug>.prompt.md` — but print no
+copy-paste fence, create no worktree, launch nothing. Report just the two
+file paths. The lane launches later via `--launch <plan file path>`.
+
 ## Launch mode (`--launch`)
 
 Fully automates the handoff using the Supacode CLI (`supacode`) — no copy-paste.
@@ -99,9 +114,16 @@ Only works when running inside Supacode; check `command -v supacode` and
 `$SUPACODE_REPO_ID`. If either is missing, say so and fall back to the normal
 print-the-prompt flow.
 
+When `--launch` was given an existing plan file's path, steps 1–2 are already
+done: use that file and its sibling `.prompt.md` (regenerate the prompt file
+from the plan via step 3's template only if the sibling is missing), take
+`<slug>` and the branch from the plan's filename/frontmatter, and start at
+step 2 below.
+
 1. **Save the prompt too.** After saving the plan file, write the filled-in
    handoff prompt (the same template as step 3) to a sibling file:
-   `~/.claude/plans/<repo-name>/<YYYY-MM-DD>-<slug>.prompt.md`.
+   `~/.claude/plans/<repo-name>/<YYYY-MM-DD>-<slug>.prompt.md`. (Already
+   done for lanes that came through `--prep`.)
 2. **Create the worktree:**
 
        supacode repo worktree-new --branch <type>/<slug> --base <default-branch> --name <slug> --fetch

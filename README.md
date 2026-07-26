@@ -91,12 +91,13 @@ concurrently.
 /loop 15m /supacode:status --reap   # optional: hands-off monitoring + cleanup
 ```
 
-Mission discovers candidates, checks them for collisions against each other,
-and launches each approved lane via `plan-feature --auto`. Lanes whose
-adversarial review refuses to auto-launch (an unresolved trade-off, work that
-needs splitting) come back **deferred** — mission then offers to open an
-interactive planning session in a new tab for each, where you answer the open
-questions yourself. From there,
+Mission discovers candidates, then plans **all approved lanes concurrently**
+(one subagent each), reviews the finished plans against each other for real
+file/subsystem collisions, and launches the survivors. Lanes that don't make
+it — an unresolved trade-off, work that needs splitting, or a collision with
+a sibling — come back **deferred**, and mission offers to open an interactive
+planning session in a new tab for each, where you answer the open questions
+yourself. From there,
 `status` is your dashboard: every lane's branch, PR state, session liveness,
 and a verdict telling you the next action. As you merge PRs on GitHub,
 `--reap` deletes lanes that are provably finished (merged, clean, session

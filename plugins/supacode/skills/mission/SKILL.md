@@ -1,6 +1,6 @@
 ---
 name: mission
-description: Propose and launch a wave of parallel work lanes - discovers candidate milestones from the repo's roadmap (delegating to a project "what's next" skill when one exists), identifies collision risks, gets the user's approval of the wave, then launches each approved lane via supacode:plan-feature --auto in its own Supacode worktree. Monitoring and cleanup belong to /supacode:status. Usage - /supacode:mission [N]. Use when the user says "/supacode:mission", "launch a wave", "spin up parallel lanes", "what can we parallelize - go do it", or "orchestrate the next milestones". Formerly /supa-mission - the old name still refers to this skill.
+description: Propose and launch a wave of parallel work lanes - discovers candidate milestones from the repo's roadmap (delegating to a project "what's next" skill when one exists), gets the user's approval of the wave, plans all approved lanes concurrently with parallel subagents, reviews the finished plans against each other for collisions, then launches each surviving lane in its own Supacode worktree. Monitoring and cleanup belong to /supacode:status. Usage - /supacode:mission [N]. Use when the user says "/supacode:mission", "launch a wave", "spin up parallel lanes", "what can we parallelize - go do it", or "orchestrate the next milestones". Formerly /supa-mission - the old name still refers to this skill.
 ---
 
 # Mission: launch a wave of parallel lanes
@@ -58,10 +58,10 @@ re-resolve the shared file keeping only your lane's rows) — your job is just
 to note the file(s) in each lane's handoff constraints.
 
 Do NOT attempt fine-grained file-overlap prediction between candidate lanes
-from roadmap prose — that is guesswork. Real overlap detection happens at
-plan time: each lane's adversarial review runs a cross-lane axis against its
-siblings' actual plans (`--siblings`) and disqualifies on real overlap.
-Only skip pairing candidates that obviously own the same subsystem.
+from roadmap prose — that is guesswork. Real overlap detection happens after
+planning: step 5's Phase B reviews the lanes' *actual finished plans* against
+each other and defers on real overlap. Only skip pairing candidates that
+obviously own the same subsystem.
 
 ## 4. Approval gate — always
 
@@ -70,27 +70,43 @@ candidate lane — label = lane name, description = one-line scope + any
 collision/ordering notes. Never launch anything the user did not select, and
 never skip this gate regardless of how the mission was invoked.
 
-## 5. Launch serially, one subagent per lane
+## 5. Plan in parallel, review collisions, launch survivors
 
-For each approved lane, in sequence, spawn a **general-purpose subagent**
-whose prompt tells it to invoke the `supacode:plan-feature` skill with:
+**Phase A — plan all lanes concurrently.** Spawn one **general-purpose
+subagent** per approved lane, ALL IN ONE MESSAGE so they run in parallel.
+Each subagent's prompt tells it to invoke the `supacode:plan-feature` skill
+with:
 
-    <lane> --auto --siblings <plan-file paths of the wave lanes already launched>
+    <lane> --auto --plan-only
 
-and to return ONLY a compact report: lane, branch, worktree ID, plan file
-path, and `launched` — or `disqualified: <reason>` (the updated
-supacode:plan-feature returns disqualifications instead of stopping when run in
-mission context). The subagent boundary is load-bearing: each lane's research,
-plan, and review stay out of the mission context, which is what lets a wave of
-3 fit in one session.
+and to return ONLY a compact report: lane, proposed branch, plan file path,
+and `ready` — or `disqualified: <reason>`. The subagent boundary is
+load-bearing: each lane's research, plan, and review stay out of the mission
+context, which is what lets a wave fit in one session.
 
 - A lane that comes back `disqualified` is marked **deferred** with its
-  reason; continue with the remaining lanes — never stall the wave. Deferral
-  is a designed outcome, not a failure: a subagent that defers on a real open
-  question did its job, and one that guesses to avoid deferring did not.
-  Never re-run a deferred lane hoping for a different answer.
-- Serial, not parallel: later lanes must receive earlier lanes' plan paths as
-  siblings, and worktree creation fetches a fresh base each time.
+  reason; the wave continues with the rest. Deferral is a designed outcome,
+  not a failure: a subagent that defers on a real open question did its job,
+  and one that guesses to avoid deferring did not. Never re-run a deferred
+  lane hoping for a different answer.
+
+**Phase B — cross-lane collision review.** Once ALL subagents have returned
+(and only if two or more lanes are `ready`), spawn ONE fresh reviewer agent
+with the plan file paths of every ready lane. It applies plan-feature's
+cross-lane axis over the *actual plans*: flag any file, subsystem, or test
+baseline that two plans both modify (repo-mandated shared files like status
+boards don't count — the executor contract handles those mechanically at
+push time). For each collision group, keep the lane the user approved first
+and defer the rest with reason "overlaps <lane> on <what>".
+
+**Phase C — launch the survivors.** For each remaining lane, in approval
+order, invoke the `supacode:handoff-plan` skill with:
+
+    --launch <plan file path>
+
+Launching stays serial on purpose: each `worktree-new --fetch` picks up the
+freshest base, and launches are cheap — the parallelism that matters already
+happened in Phase A.
 
 ## 6. Wave report
 

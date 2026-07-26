@@ -1,6 +1,6 @@
 ---
 name: plan-feature
-description: Plan a piece of work end-to-end - a roadmap milestone/chunk OR a free-form feature/bug description. Enters plan mode, researches docs and codebase with parallel agents, drafts an execution-ready plan, then adversarially reviews it for completeness, holes, single-context feasibility, and blast radius. Usage - /supacode:plan-feature <milestone-or-description> [--auto] [--siblings <plan-file-paths>]. With --auto it skips the plan-approval gate and chains straight into /supacode:handoff-plan --launch; --siblings adds a cross-lane collision axis to the review for waves launched by /supacode:mission. Use when the user says "/supacode:plan-feature A4", "/supacode:plan-feature fix the vent double-tap bug", "plan milestone X", "plan this feature/fix", or "help me plan <chunk>". Formerly /supa-plan-feature - the old name still refers to this skill.
+description: Plan a piece of work end-to-end - a roadmap milestone/chunk OR a free-form feature/bug description. Enters plan mode, researches docs and codebase with parallel agents, drafts an execution-ready plan, then adversarially reviews it for completeness, holes, single-context feasibility, and blast radius. Usage - /supacode:plan-feature <milestone-or-description> [--auto] [--plan-only] [--siblings <plan-file-paths>]. With --auto it skips the plan-approval gate and chains straight into /supacode:handoff-plan --launch; --plan-only (with --auto) preps the handoff files but launches nothing, for callers like /supacode:mission that launch separately; --siblings adds a cross-lane collision axis to the review. Use when the user says "/supacode:plan-feature A4", "/supacode:plan-feature fix the vent double-tap bug", "plan milestone X", "plan this feature/fix", or "help me plan <chunk>". Formerly /supa-plan-feature - the old name still refers to this skill.
 ---
 
 # Milestone / Feature Planning
@@ -21,10 +21,15 @@ quicker review — never skip the review entirely.
 - If `$ARGUMENTS` is empty, ask what to plan before doing anything else.
 - Check `$ARGUMENTS` for `--auto`; the rest is the milestone name or the work
   description.
+- Check `$ARGUMENTS` for `--plan-only` (only meaningful with `--auto`; passed
+  by /supacode:mission): plan and review exactly as below, but stop short of
+  launching — step 5 preps the handoff instead of executing it.
 - Check `$ARGUMENTS` for `--siblings <paths>` — plan-file paths of lanes
-  launching concurrently with this one (passed by /supacode:mission). Read those
-  plans during research; they feed the cross-lane axis of the review (step 4)
-  and its disqualifier (step 5).
+  planned alongside this one whose plans already exist. Read those plans
+  during research; they feed the cross-lane axis of the review (step 4) and
+  its disqualifier (step 5). (/supacode:mission plans lanes concurrently, so
+  it runs its cross-lane review itself at the wave level instead of passing
+  this flag.)
 - **Normal mode:** if not already in plan mode, call `EnterPlanMode` now (load
   its schema via ToolSearch if needed) and stay in plan mode for the entire
   skill.
@@ -147,6 +152,12 @@ become ammunition against re-litigation later).
 saves the plan, creates the Supacode worktree, and starts the executor session.
 Then report: the work planned, plan summary, review verdict, worktree/branch,
 plan file path.
+
+With `--plan-only`, invoke it with args `--prep <slug>` instead: the plan and
+prompt files are saved but no worktree is created and nothing launches.
+Report `ready` plus the plan file path — the caller (usually a mission)
+launches later via `handoff-plan --launch <plan file path>` after its own
+cross-lane review.
 
 Auto-launch is DISQUALIFIED — stop and present to the user instead — when any of
 these hold:
