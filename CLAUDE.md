@@ -32,8 +32,12 @@ there is no build step.
 4. Check `README.md` for drift: the Skills table (new/renamed skills, changed
    one-line purposes) and the Workflows section (does the behavior described
    still match — flags, defaults, what asks vs. defers, what gets launched).
-5. Remind the user to run `/plugin marketplace update supacode-skills`
-   (or `/reload-plugins` mid-session) — local marketplaces do not auto-refresh.
+5. Publish it yourself — run both:
+   `claude plugin marketplace update supacode-skills` (refreshes the catalog)
+   and `claude plugin update supacode@supacode-skills` (refreshes the
+   installed copy). Local marketplaces do not auto-refresh, and the first
+   command alone does NOT update the installed plugin. Then tell the user the
+   change applies to new sessions (existing ones need `/reload-plugins`).
 
 ## Naming
 
