@@ -92,7 +92,11 @@ concurrently.
 ```
 
 Mission discovers candidates, checks them for collisions against each other,
-and launches each approved lane via `plan-feature --auto`. From there,
+and launches each approved lane via `plan-feature --auto`. Lanes whose
+adversarial review refuses to auto-launch (an unresolved trade-off, work that
+needs splitting) come back **deferred** — mission then offers to open an
+interactive planning session in a new tab for each, where you answer the open
+questions yourself. From there,
 `status` is your dashboard: every lane's branch, PR state, session liveness,
 and a verdict telling you the next action. As you merge PRs on GitHub,
 `--reap` deletes lanes that are provably finished (merged, clean, session

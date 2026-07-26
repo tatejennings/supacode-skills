@@ -89,7 +89,7 @@ plan, and review stay out of the mission context, which is what lets a wave of
 - Serial, not parallel: later lanes must receive earlier lanes' plan paths as
   siblings, and worktree creation fetches a fresh base each time.
 
-## 6. Wave report — then stop
+## 6. Wave report
 
 Report a table: lane · branch · worktree · plan file · status
 (`launched` | `deferred: <reason>`). Close with:
@@ -97,9 +97,28 @@ Report a table: lane · branch · worktree · plan file · status
 - monitoring: `/supacode:status`, or `/loop 15m /supacode:status --reap` for
   hands-off watching + cleanup;
 - the reminder that every PR is merged by the user on GitHub — nothing in
-  this pipeline merges, ever;
-- deferred lanes and what would unblock each (usually: run
-  `/supacode:plan-feature <lane>` interactively).
+  this pipeline merges, ever.
 
-Do not monitor the launched sessions and do not keep the mission session busy
-— its job ended at launch.
+## 7. Offer interactive planning for deferred lanes — then stop
+
+If any lanes came back `deferred`, ask ONCE with AskUserQuestion
+(multiSelect; one option per deferred lane, description = the deferral
+reason) which of them to open an interactive planning session for. Skip the
+question entirely when nothing was deferred. For each lane the user selects:
+
+    supacode tab new --input 'claude --remote-control "plan-<lane>" "Run /supacode:plan-feature <lane>. A mission deferred this lane because: <reason>. Draft plan file, read it first if present: <path or none>."'
+
+- The tab opens in the mission's own worktree (the primary checkout —
+  `tab new` defaults to `$SUPACODE_WORKTREE_ID`), which is right: planning
+  needs no worktree; /supacode:handoff-plan creates one at launch time.
+- Keep the pointer prompt to that single line; strip quotes/newlines from the
+  reason so it survives the nested shell quoting.
+- Do NOT pass `--permission-mode auto` here — unlike executor launches, this
+  session exists precisely so the user can answer its questions; plan mode
+  gates writes, and the user will be present.
+
+The new sessions ask their trade-off questions there; the user answers in
+those tabs. Lanes the user declines stay deferred in the report (unblock
+later with `/supacode:plan-feature <lane>`). Either way, the mission then
+stops — do not monitor the launched sessions and do not keep the mission
+session busy; its job ended at launch.
