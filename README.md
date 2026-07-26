@@ -32,7 +32,7 @@ and `/plugin install supacode@supacode-skills`.)
 | Skill | Purpose |
 |---|---|
 | `/supacode:supacode-cli` | Reference for controlling the Supacode app via its CLI |
-| `/supacode:plan-feature` | Plan a milestone or feature end-to-end with adversarial review; `--auto` skips the approval gate and launches the executor lane |
+| `/supacode:plan-feature` | Plan a milestone or feature end-to-end with adversarial review; adopts a pre-written plan if the milestone links to one; `--auto` skips the approval gate and launches the executor lane |
 | `/supacode:auto` | Fire-and-forget shorthand for `plan-feature <work> --auto` |
 | `/supacode:handoff-plan` | Package a plan for a fresh worktree context; `--launch` automates it |
 | `/supacode:mission` | Propose and launch a wave of parallel work lanes |
@@ -81,6 +81,12 @@ Planning, adversarial review, worktree creation, and executor launch all
 happen without stopping — *unless* the review finds a reason not to (work
 needs splitting, a trade-off needs your call, the milestone is already in
 flight), in which case it stops and presents instead of launching.
+
+**Already wrote the plan yourself?** Link it from the milestone entry
+(`[plan](docs/plans/thing.md)`) and planning is skipped: your file is adopted
+as-is — steps carried through verbatim, missing sections like Verification
+filled in — reviewed for feasibility and blast radius, then handed off. If the
+review would change your approach, it reports back instead of rewriting you.
 
 ### Parallel wave: several lanes at once
 

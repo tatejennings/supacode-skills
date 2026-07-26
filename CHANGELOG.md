@@ -3,6 +3,16 @@
 Notable changes to the `supacode` plugin. Versions track
 `plugins/supacode/.claude-plugin/plugin.json`.
 
+## 0.7.0 — 2026-07-26
+
+- `plan-feature`: when a milestone **links to a plan markdown file** with
+  implementation steps, adopt that plan instead of re-planning — skip
+  research and drafting, carry the user's own words through verbatim (filling
+  only missing sections like Verification), still run the adversarial review,
+  and hand off. A review finding that would change an adopted plan's approach
+  is a disqualifier, not a silent edit — the user decides. Links to design
+  docs or specs without steps still plan normally.
+
 ## 0.6.0 — 2026-07-26
 
 - New `auto` skill: `/supacode:auto <work>` — fire-and-forget shorthand,

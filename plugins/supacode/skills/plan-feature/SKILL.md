@@ -1,6 +1,6 @@
 ---
 name: plan-feature
-description: Plan a piece of work end-to-end - a roadmap milestone/chunk OR a free-form feature/bug description. Enters plan mode, researches docs and codebase with parallel agents, drafts an execution-ready plan, then adversarially reviews it for completeness, holes, single-context feasibility, and blast radius. Usage - /supacode:plan-feature <milestone-or-description> [--auto] [--plan-only] [--siblings <plan-file-paths>]. With --auto it skips the plan-approval gate and chains straight into /supacode:handoff-plan --launch; --plan-only (with --auto) preps the handoff files but launches nothing, for callers like /supacode:mission that launch separately; --siblings adds a cross-lane collision axis to the review. Use when the user says "/supacode:plan-feature A4", "/supacode:plan-feature fix the vent double-tap bug", "plan milestone X", "plan this feature/fix", or "help me plan <chunk>". Formerly /supa-plan-feature - the old name still refers to this skill.
+description: Plan a piece of work end-to-end - a roadmap milestone/chunk OR a free-form feature/bug description. Enters plan mode, researches docs and codebase with parallel agents, drafts an execution-ready plan, then adversarially reviews it for completeness, holes, single-context feasibility, and blast radius. When the milestone already links to a written plan file, it adopts that plan verbatim and skips straight to review and handoff instead of re-planning. Usage - /supacode:plan-feature <milestone-or-description> [--auto] [--plan-only] [--siblings <plan-file-paths>]. With --auto it skips the plan-approval gate and chains straight into /supacode:handoff-plan --launch; --plan-only (with --auto) preps the handoff files but launches nothing, for callers like /supacode:mission that launch separately; --siblings adds a cross-lane collision axis to the review. Use when the user says "/supacode:plan-feature A4", "/supacode:plan-feature fix the vent double-tap bug", "plan milestone X", "plan this feature/fix", or "help me plan <chunk>". Formerly /supa-plan-feature - the old name still refers to this skill.
 ---
 
 # Milestone / Feature Planning
@@ -51,6 +51,31 @@ quicker review — never skip the review entirely.
   plan against that chunk's definition instead.
 - Either way: check whether the work is already marked in-flight or partially
   done (status board, recent commits/PRs) before planning it from scratch.
+
+### 1a. Pre-written plan? Adopt it instead of re-planning
+
+If the milestone entry **links to a markdown file** (`[…](path.md)`, a bare
+`docs/…md` path, or an explicit `Plan: <path>` field) and that file exists and
+contains implementation steps, the user has already planned this work. Adopt
+it — do not re-plan, and do not rewrite their content:
+
+- Announce which file you're adopting, then **skip step 2 (research) and the
+  drafting half of step 3 entirely.**
+- Carry the plan's own words into the plan file. Restructure into the step-3
+  sections and fill genuinely missing ones (Verification, Out of scope,
+  Context pointing at the milestone + source file), but never reword,
+  reorder, or "improve" steps the user wrote. Their plan is authoritative.
+- Cite the source file in Context so the executor can read the original.
+- Still run step 4's adversarial review — the point is feasibility and blast
+  radius, which a hand-written plan needs as much as a generated one. Report
+  its findings to the user (or, under `--auto`, in your final report); fold in
+  only additive fixes (a missing verification, an unstated dependency). A
+  finding that would change the user's chosen approach is a disqualifier, not
+  an edit you make yourself — see step 5.
+- Ambiguity resolves toward planning normally: a link to a design doc,
+  spec, or requirements page is NOT a plan (no implementation steps ⇒ plan as
+  usual), and a broken/missing link is worth one line in your report before
+  planning normally.
 
 ## 2. Research with parallel agents
 
@@ -166,6 +191,9 @@ these hold:
 - any fork lacked an overwhelming recommendation (step 3's bar) — never launch
   on a guess; state the open question(s) as the disqualification reason so an
   interactive session can pick up exactly there;
+- an **adopted** plan (step 1a) drew a review finding that would change its
+  approach — the user wrote that plan, so rewriting it is theirs to decide,
+  not yours; report the finding and let them choose;
 - the work appears already in flight elsewhere;
 - the review's cross-lane axis found real overlap with a sibling plan
   (`--siblings`);
