@@ -47,13 +47,16 @@ dashboard (and to /supacode:mission's in-flight exclusion). Don't use
 
 ## 2. Derive per-lane facts
 
-**Short-circuit first:** if the lane set is empty, skip everything below —
-report "no lanes" (after the orphan-plan-file scan, which is cheap and local)
-and stop. A looped `/supacode:status` on a repo with no active lanes should
-not be making network calls.
+**Short-circuit first:** if the lane set is empty, scan for plan files
+(local, free). No lanes *and* no plan files ⇒ report "no lanes" and stop
+without touching the network — the common case for a looped
+`/supacode:status` on an idle repo. If plan files do exist, continue: the
+orphan scan below needs the PR list to tell a completed lane from a crashed
+one, and reporting every orphan as "needs attention" would make a looped run
+cry wolf.
 
-Otherwise fetch PR state ONCE for the whole repo from the primary checkout,
-then join locally by branch:
+Fetch PR state ONCE for the whole repo from the primary checkout, then join
+locally by branch:
 
     gh pr list --state all --limit 100 \
       --json headRefName,number,state,mergedAt,headRefOid,url
@@ -77,9 +80,12 @@ between them:
   lane set entirely.
 - **HEAD:** the third line, for the `headRefOid` comparison.
 - **Branch and dirty:** `status --porcelain -b` prints `## <branch>...` as its
-  first line, then one line per dirty path — no dirty lines ⇒ clean. A
-  detached HEAD shows as `## HEAD (no branch)` ⇒ verdict `needs-attention`,
-  never reapable.
+  first line, then one line per dirty path — no dirty lines ⇒ clean.
+- **Detached HEAD:** the `##` line names no real branch (git renders this as
+  `## HEAD (no branch)`, but treat any first line you cannot parse into a
+  branch name as detached rather than trusting that exact string) ⇒ verdict
+  `needs-attention`, never reapable. When it matters, confirm with
+  `git -C <wt> branch --show-current` returning empty.
 - **Session:** empty tab list ⇒ session dead. Non-empty ⇒ "possibly alive" —
   tabs are bare UUIDs and a tab can outlive its process, so tab-present is
   never proof of life, only grounds for caution.
@@ -93,10 +99,15 @@ Isolate errors per lane: if any command fails for one lane, give it verdict
 lane must not abort the report.
 
 **Orphan plan files:** a plan file whose `branch:`/slug has no live worktree.
-Look its branch up in the repo-wide PR list: MERGED ⇒ report "completed" and
-backfill the tombstone (see §5 frontmatter write) if absent; otherwise report
-"orphaned — needs attention" (crashed launch or manually removed worktree).
-Orphans are never reap candidates.
+Look its branch up in the repo-wide PR list: MERGED ⇒ report "completed";
+otherwise report "orphaned — needs attention" (crashed launch or manually
+removed worktree). Orphans are never reap candidates.
+
+Backfill a tombstone **only** when the plan carries a `worktree:` key whose
+lane is provably gone — i.e. the same exact-key rule as §5. An orphan matched
+by branch/slug alone is reported, never written: a reused branch name would
+stamp a new PR's number onto an unrelated old plan, which is the failure this
+release exists to prevent. Report the backfill as skipped and why.
 
 ## 3. Verdicts
 
@@ -141,10 +152,13 @@ the next action, e.g.:
 ## 5. `--reap` — delete provably-finished lanes
 
 Only lanes with verdict `merged-reapable` are candidates. For each, confirm
-all five below. Checks **3 and 5 must be re-run immediately before the
-delete** — a dirty file or a reopened tab can appear in the seconds since the
-scan. Checks 1, 2 and 4 can reuse §2's results: filesystem layout cannot
-change, and a merged PR's state and head OID are settled.
+all five below. Checks **1, 3 and 5 must be re-run immediately before the
+delete**: a dirty file or a reopened tab can appear in the seconds since the
+scan, and check 1 is the guard whose failure destroys the primary repo — its
+cost is one command, so never trade it for a cached value (a `git worktree
+move`/`repair`, or the user reorganizing a checkout mid-run, is rare but
+unrecoverable). Checks 2 and 4 may reuse §2's results: a merged PR's state
+and head OID are settled.
 
 1. Linked worktree: `git -C <wt> rev-parse --git-dir` ≠ `--git-common-dir`
    (defense-critical; never delete a primary checkout).
@@ -161,12 +175,14 @@ change, and a merged PR's state and head OID are settled.
 
 If all five hold, in this order:
 
-1. **Tombstone the plan file** — only when it was matched by the exact
-   `worktree:` key (§2). Add/update frontmatter `status: merged`,
-   `pr: <number>`, `merged: <YYYY-MM-DD>`. Advisory only — git/gh remain the
-   truth. A file matched by the weaker `branch:`/legacy-slug fallback is
-   **reported, never written**: branch names get reused, so a stale plan for
-   an old `fix/auth` would be silently tombstoned by a new one.
+1. **Tombstone the plan file** — per the write rule in
+   `handoff-plan/references/plan-file-format.md`: an exact `worktree:` match,
+   or a `branch:` match on a file that carries no `worktree:` key at all (the
+   manual-worktree flow). Add/update `status: merged`, `pr: <number>`,
+   `merged: <YYYY-MM-DD>`. Advisory only — git/gh remain the truth. A file
+   whose `worktree:` names a different lane is **reported, never written**:
+   branch names get reused, so a stale plan for an old `fix/auth` would
+   otherwise be tombstoned by a new one.
 2. **Delete:** `supacode worktree delete -w <id>` using the exact ID string
    from `worktree list`.
 3. **Update stale memories:** if the memory system tracks this lane (an

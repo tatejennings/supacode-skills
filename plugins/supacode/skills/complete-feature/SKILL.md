@@ -50,12 +50,25 @@ things after the PR opens too.)
 ## 3. Tombstone the plan file
 
 If a plan file for this lane exists, mark it merged — matching and tombstone
-fields per `handoff-plan/references/plan-file-format.md`. Match `worktree:`
-against `$SUPACODE_WORKTREE_ID` (you already have it from step 1), and write
-`status: merged`, `pr: <number>`, `merged: <YYYY-MM-DD>` **only** on that
-exact match. A candidate matching by `branch:` alone gets mentioned in the
-summary, never written — branch names get reused, so writing there can mark
-an unrelated old plan merged. No matching file ⇒ skip silently.
+fields per `handoff-plan/references/plan-file-format.md`. **Read that
+reference before writing**: this skill always runs inside a linked worktree,
+where using the cwd basename as the repo name silently points the lookup at a
+directory that does not exist.
+
+Match `worktree:` against `$SUPACODE_WORKTREE_ID` (you have it from step 1),
+then write `status: merged`, `pr: <number>`, `merged: <YYYY-MM-DD>` when
+either holds:
+
+- the `worktree:` key matches exactly, or
+- the candidate has **no `worktree:` key at all** and matches by `branch:` —
+  a lane created through the manual `git worktree add` flow, which never
+  writes that key. Absence of the key is a different flow, not an ambiguous
+  match.
+
+Never write when the file has a `worktree:` key that points at a *different*
+lane, even if `branch:` matches: branch names get reused, and that is how an
+unrelated old plan gets marked merged. Say so in the summary instead. No
+matching file ⇒ skip silently.
 
 ## 4. Close-out summary — BEFORE deletion
 

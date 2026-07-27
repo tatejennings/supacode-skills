@@ -96,10 +96,12 @@ with the plan file paths of every ready lane. It applies plan-feature's
 cross-lane axis over the *actual plans*: flag any file, subsystem, or test
 baseline that two plans both modify (repo-mandated shared files like status
 boards don't count — the executor contract handles those mechanically at
-push time). For each collision group, keep the lane that came **first in the
-order you presented the options in §4** — a multiSelect answer is a set, not
-a ranking, so presentation order is the only stable tiebreak — and defer the
-rest with reason "overlaps <lane> on <what>".
+push time). The reviewer **reports collision groups; it does not pick
+winners** — it has only the plan files, not the wave's ordering. You then
+resolve each group yourself: keep the lane that came first in the order you
+presented the options in §4 (a multiSelect answer is a set, not a ranking, so
+presentation order is the only stable tiebreak) and defer the rest with
+reason "overlaps <lane> on <what>".
 
 **Phase C — launch the survivors.** For each remaining lane, in §4
 presentation order, invoke the `supacode:handoff-plan` skill with:
@@ -109,6 +111,13 @@ presentation order, invoke the `supacode:handoff-plan` skill with:
 Launching stays serial on purpose: each `worktree-new --fetch` picks up the
 freshest base, and launches are cheap — the parallelism that matters already
 happened in Phase A.
+
+If a launch does not produce a running session — handoff-plan falls back to
+printing a copy-paste prompt when Supacode is unavailable, and inside a
+subagent nobody would ever see that fence — mark the lane
+`deferred: planned but not launched (<reason>)` and give its plan file path
+in the report. A silently unlaunched lane is the one failure this wave must
+never hide; §1's preflight makes it unlikely, not impossible.
 
 ## 6. Wave report
 

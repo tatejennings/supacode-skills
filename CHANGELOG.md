@@ -55,6 +55,32 @@ plus efficiency work on the most-run skill.
 - Trimmed always-resident frontmatter descriptions (`handoff-plan`'s listed
   its triggers twice; flag semantics moved into bodies).
 
+**Review fixes** (from a code review of this branch)
+
+- The orphan-plan-file scan still backfilled tombstones on a branch/slug
+  match — the exact write this release forbids elsewhere. Now subject to the
+  same exact-key rule.
+- Strict `worktree:` matching would have left plans from the manual
+  `git worktree add` flow permanently un-tombstoneable, since only
+  `--launch` writes that key. Writing is now allowed when the file has **no**
+  `worktree:` key at all (a different flow, not an ambiguous match) — but
+  never when it names a different lane.
+- Restored the primary-checkout guard to the re-verified-before-delete set;
+  caching it to save one call traded the only unrecoverable failure for a
+  trivial saving.
+- `--launch <path>` now treats "the `.prompt.md` sibling exists" as a
+  precondition; a missing sibling launched an executor into a dead pointer.
+- `mission`'s collision reviewer reports groups instead of picking winners —
+  it never had the wave's ordering, so the presentation-order tiebreak was
+  unreachable and reintroduced nondeterminism.
+- `mission` Phase C now reports a lane that planned but failed to launch,
+  instead of silently producing a lane nobody started.
+- The plan-file collision guard's update-in-place exception has a detectable
+  trigger (same milestone/slug) rather than depending on caller intent.
+- The empty-lane short-circuit no longer strands the orphan scan without the
+  PR list it needs; detached-HEAD detection no longer rests on an exact
+  human-facing git string.
+
 **Structure**
 
 - Extracted the two specs whose drift causes real bugs into shared references:

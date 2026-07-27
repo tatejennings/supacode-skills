@@ -56,9 +56,18 @@ In this order:
 3. **Legacy** (no frontmatter): slug-in-filename ↔ branch suffix. Note as
    "legacy" when reporting.
 
-**Only a match from key 1 may be written to.** Branch names get reused over
-time, so tombstoning a branch-matched file can mark an unrelated old plan as
-merged. Weaker matches are fine to *display*, never to modify.
+**Writing (tombstones) requires more than a display match.** Branch names get
+reused over time, so tombstoning a branch-matched file can mark an unrelated
+old plan as merged. Write only when:
+
+- key 1 matched exactly, **or**
+- the file has **no `worktree:` key at all** and key 2 matched — that is the
+  manual `git worktree add` flow, which never writes the key. A missing key is
+  a different flow, not an ambiguous match; refusing here would leave those
+  plans permanently un-tombstoned.
+
+Never write to a file whose `worktree:` key names a *different* lane, even if
+`branch:` matches. Weaker matches are always fine to *display*.
 
 ## Collision guard
 
@@ -67,6 +76,10 @@ Before saving, if the target plan file already exists — or, when
 `supacode worktree list` — suffix the slug (`-2`, `-3`, …). Never overwrite an
 existing plan or reuse a live worktree name.
 
-Exception: a caller deliberately revising a prepped plan (a mission's deferred
-lane) should **update that file in place** instead of creating a suffixed
-twin, which would orphan the original's `.prompt.md`.
+Exception — revising an existing plan rather than creating a new one. Suffix
+only when the existing file describes *different* work. When it describes the
+**same lane** — its `milestone:` (or slug) matches the work you were asked to
+plan, which is the case when a mission sends you back to finish a deferred
+lane — update that file in place and rewrite its `.prompt.md` sibling.
+Suffixing there produces two plans for one lane plus an orphaned prompt file
+that `status` will match.

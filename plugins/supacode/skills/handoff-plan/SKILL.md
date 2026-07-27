@@ -96,10 +96,14 @@ Only works when running inside Supacode; check `command -v supacode` and
 `$SUPACODE_REPO_ID`. If either is missing, say so and fall back to the normal
 print-the-prompt flow.
 
-When `--launch` was given an existing plan file's path, steps 1–2 are already
-done: use that file and its sibling `.prompt.md` (regenerate the prompt file
-from the plan via step 3's template only if the sibling is missing), and start
-at step 2 below. Take the **branch from the plan's `branch:` frontmatter** and
+When `--launch` was given an existing plan file's path, the plan is already
+saved — start at step 2 below, but **first confirm the sibling
+`.prompt.md` exists**, and write it from step 3's template if it does not.
+This is a precondition, not an optional step: step 4 launches a session whose
+entire instruction is "read that prompt file", so a missing sibling (a
+`--prep` run that died after writing the plan) boots an executor into a dead
+pointer with no plan and no contract. Take the **branch from the plan's
+`branch:` frontmatter** and
 the slug from its filename — the filename is `<date>-<slug>.md` and carries no
 `feat|fix|chore|docs` prefix, so deriving the branch from it would create an
 unprefixed branch that violates the naming rule the executor is then told to
