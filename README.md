@@ -70,10 +70,18 @@ The skills compose into a pipeline: **plan → hand off → implement → PR →
 merge (always you, by hand) → clean up**. Each lane of work gets its own
 Supacode worktree and Claude session, so your main session stays free.
 
-```
-plan-feature ──► handoff-plan ──► [executor session] ──► PR ──► you merge
-     ▲                                                            │
-   mission (launches several lanes at once)          complete-feature / status --reap
+```mermaid
+flowchart LR
+    plan["/plan-feature"] --> handoff["/handoff-plan"]
+    handoff --> exec["executor session<br/><i>own worktree + tab</i>"]
+    exec --> pr(["open PR"])
+    pr --> merge{{"you merge"}}
+    merge --> done["/complete-feature"]
+
+    classDef lane fill:#2d6a9f,stroke:#1b4a73,color:#fff
+    classDef human fill:#b8860b,stroke:#7a5a08,color:#fff
+    class plan,handoff,exec,done lane
+    class merge human
 ```
 
 **→ [WORKFLOWS.md](WORKFLOWS.md)** walks through each one with examples: a

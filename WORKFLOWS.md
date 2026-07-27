@@ -5,10 +5,21 @@ off → implement → PR → merge (always you, by hand) → clean up**. Each la
 work gets its own Supacode worktree and Claude session, so your main session
 stays free.
 
-```
-plan-feature ──► handoff-plan ──► [executor session] ──► PR ──► you merge
-     ▲                                                            │
-   mission (launches several lanes at once)          complete-feature / status --reap
+```mermaid
+flowchart LR
+    mission["/mission<br/><i>launches several lanes</i>"] --> plan
+    plan["/plan-feature<br/><i>research · draft · review</i>"] --> handoff
+    auto["/auto"] -.-> plan
+    handoff["/handoff-plan<br/><i>new worktree + session</i>"] --> exec
+    exec["executor session<br/><i>implement · verify · self-review</i>"] --> pr(["open PR"])
+    pr --> merge{{"you merge<br/><i>never automated</i>"}}
+    merge --> done["/complete-feature<br/>or /status --reap<br/><i>worktree deleted</i>"]
+    status["/status<br/><i>dashboard · paint</i>"] -.watches.-> exec
+
+    classDef lane fill:#2d6a9f,stroke:#1b4a73,color:#fff
+    classDef human fill:#b8860b,stroke:#7a5a08,color:#fff
+    class mission,plan,auto,handoff,exec,done,status lane
+    class merge human
 ```
 
 ## Hands-on: one feature, reviewed at each step
