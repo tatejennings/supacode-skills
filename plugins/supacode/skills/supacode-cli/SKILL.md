@@ -133,7 +133,9 @@ Long-lived scripts (dev servers) keep running after `run` returns; pair every
 
 - **Never delete the primary checkout.** A disposable worktree has
   `git rev-parse --git-dir` ≠ `git rev-parse --git-common-dir`; equal means
-  primary — archive it at most, never `worktree delete`.
+  primary — archive it at most, never `worktree delete`. This rule and the
+  repo-name/ID conventions that go with it live in
+  **`references/worktree-identity.md`**; read it before any delete.
 - **Deleting the current worktree kills your own tab** (and the session in
   it). If that is intended (self-cleanup after a merge), make `delete` the
   literal last command after all reporting is done. The tab dying right after

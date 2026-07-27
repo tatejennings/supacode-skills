@@ -3,6 +3,67 @@
 Notable changes to the `supacode` plugin. Versions track
 `plugins/supacode/.claude-plugin/plugin.json`.
 
+## 0.8.0 — 2026-07-26
+
+Consistency pass from a full audit of all skills. Twelve correctness fixes,
+plus efficiency work on the most-run skill.
+
+**Correctness**
+
+- `status --reap` and `complete-feature` now tombstone a plan file **only** on
+  an exact `worktree:` match. Previously a reused branch name (`fix/auth`
+  months later) could mark an unrelated old plan as merged.
+- `complete-feature` matches on `worktree:` first (it already had
+  `$SUPACODE_WORKTREE_ID` in hand) instead of the weaker `branch:` key —
+  the two skills now agree on the join key.
+- `plan-feature`'s adversarial review said "four axes" while listing five; an
+  agent could skip the cross-lane axis that step 5's disqualifier depends on.
+- `mission`'s collision tiebreak said "the lane the user approved first", but
+  a multiSelect answer is a set with no order — two identical runs could defer
+  different lanes. Now uses §4 presentation order.
+- `status`'s `merged-live` verdict referenced undefined "checks pass"; now
+  uses the same explicit conjunction as `merged-reapable`, and
+  `needs-attention` explicitly wins any overlap.
+- `plan-feature`'s Supacode-presence and live-lane disqualifiers no longer
+  fire under `--plan-only`, where nothing launches — a mission subagent could
+  defer a lane for lacking a capability it never needed.
+- `handoff-plan --launch <path>` takes the branch from `branch:` frontmatter,
+  not the filename (which carries no `feat|fix|…` prefix and would produce an
+  unprefixed branch).
+- `handoff-plan`'s collision guard only calls `supacode` when it exists — the
+  guard also runs in the non-Supacode fallback path.
+- `mission`'s deferred-lane relaunch now updates the prepped plan in place
+  instead of drafting a twin, which orphaned the original `.prompt.md`.
+- The executor contract no longer contradicts itself about whether the
+  worktree may be reaped while the session lives.
+- `plan-feature`'s `--auto` write permission is scoped to exclude
+  `--plan-only`; the `--launch <slug>` vs `--launch <path>` forms are
+  distinguished.
+- `--siblings` is no longer advertised in frontmatter (no skill passes it
+  since mission moved to wave-level review); still documented in the body.
+
+**Efficiency**
+
+- `status` gathers per-lane facts in 4 calls instead of 6
+  (`rev-parse --git-dir --git-common-dir HEAD` returns three values in one
+  call; `status --porcelain -b` carries branch and dirtiness), and now says to
+  issue every lane's commands in one message so they run concurrently.
+- `status` short-circuits before the repo-wide `gh pr list` when there are no
+  lanes — a looped run on an idle repo made a network call for nothing.
+- `--reap` re-runs only the two race-sensitive checks immediately before
+  deleting; filesystem layout and settled PR state are reused from the scan.
+- Trimmed always-resident frontmatter descriptions (`handoff-plan`'s listed
+  its triggers twice; flag semantics moved into bodies).
+
+**Structure**
+
+- Extracted the two specs whose drift causes real bugs into shared references:
+  `supacode-cli/references/worktree-identity.md` (deletion safety, repo-name
+  derivation, ID conventions) and
+  `handoff-plan/references/plan-file-format.md` (path, frontmatter, match
+  order, collision guard). Four skills now point at one spec instead of
+  keeping copies.
+
 ## 0.7.2 — 2026-07-26
 
 - Docs: the README skills table now has a "What you see in Supacode" column —

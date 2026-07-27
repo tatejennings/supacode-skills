@@ -2,7 +2,7 @@
   "name": "supacode",
   "description": "Requires the Supacode macOS app (supacode.sh). Control it from Claude: worktrees, tabs, surfaces, scripts, and session launching via the supacode CLI, plus plan/handoff/status/complete feature-workflow skills.",
   "homepage": "https://supacode.sh",
-  "version": "0.7.2",
+  "version": "0.8.0",
   "author": {
     "name": "Tate Jennings"
   }

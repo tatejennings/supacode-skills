@@ -17,9 +17,10 @@ delete on a failed check — tell the user what to resolve instead (they can
 `supacode worktree archive` manually if they want it out of the sidebar).
 
 1. **This is a disposable linked worktree, not the primary checkout:**
-   - `$SUPACODE_WORKTREE_ID` is set, and
-   - `git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`
-     (equal means primary checkout — NEVER delete that).
+   `$SUPACODE_WORKTREE_ID` is set, and
+   `git rev-parse --git-dir --git-common-dir` returns two different values
+   (equal ⇒ primary checkout — NEVER delete that). Full rule in
+   `supacode-cli/references/worktree-identity.md`.
 2. **The PR is merged:** `gh pr view --json state,url,mergedAt,headRefOid` for
    the current branch reports state `MERGED`. No PR found, or state
    OPEN/CLOSED-unmerged → stop.
@@ -48,14 +49,13 @@ things after the PR opens too.)
 
 ## 3. Tombstone the plan file
 
-If a plan file for this lane exists, mark it merged. Find it by matching the
-current branch against `branch:` frontmatter in `~/.claude/plans/<repo-name>/`
-(repo name = basename of the primary checkout via
-`git rev-parse --git-common-dir`, never this worktree's basename; exclude
-`*.prompt.md`). Add/update frontmatter: `status: merged`, `pr: <number>`,
-`merged: <YYYY-MM-DD>`. No matching file ⇒ skip silently. The tombstone is
-advisory — git/gh remain the truth; /supacode:status uses it to tell a completed
-lane from a crashed one after the worktree is gone.
+If a plan file for this lane exists, mark it merged — matching and tombstone
+fields per `handoff-plan/references/plan-file-format.md`. Match `worktree:`
+against `$SUPACODE_WORKTREE_ID` (you already have it from step 1), and write
+`status: merged`, `pr: <number>`, `merged: <YYYY-MM-DD>` **only** on that
+exact match. A candidate matching by `branch:` alone gets mentioned in the
+summary, never written — branch names get reused, so writing there can mark
+an unrelated old plan merged. No matching file ⇒ skip silently.
 
 ## 4. Close-out summary — BEFORE deletion
 

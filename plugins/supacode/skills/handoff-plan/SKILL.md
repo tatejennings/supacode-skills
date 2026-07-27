@@ -1,6 +1,6 @@
 ---
 name: handoff-plan
-description: Hand the plan developed in this conversation off to a fresh Claude session in its own Supacode worktree, so implementation happens in a separate lane instead of this session. Saves the plan to a file and prints a copy-paste prompt telling the new context to execute the plan on a new branch, commit as it goes, run a low-effort code review, open a PR once review and tests pass (never merging it), and end with a final summary. Use when the user says "hand this off", "run this in a new worktree", "spin up a session to build this", "package this plan for another context", or "/supacode:handoff-plan". With --launch (inside Supacode), it also creates the worktree via the supacode CLI and starts the Claude session there automatically with Remote Control enabled; --launch can also take an existing plan-file path to launch a previously prepped lane. With --prep it saves the plan and prompt files but launches nothing, for callers like /supacode:mission that plan in parallel and launch later. Use when the user says "/supacode:handoff-plan", "hand this off", "write a handoff prompt", or "package this plan for another context". Formerly /supa-handoff-plan - the old name still refers to this skill.
+description: Hand the plan developed in this conversation off to a fresh Claude session in its own Supacode worktree, so implementation happens in a separate lane instead of this session. Saves the plan to a file and produces an executor contract - implement on a new branch, commit as it goes, self-review, open a PR (never merging it), report back. With --launch it creates the worktree and starts the session automatically with Remote Control enabled; --prep saves the files and launches nothing. Use when the user says "/supacode:handoff-plan", "hand this off", "run this in a new worktree", "spin up a session to build this", "write a handoff prompt", or "package this plan for another context". Use when the user says "/supacode:handoff-plan", "hand this off", "write a handoff prompt", or "package this plan for another context". Formerly /supa-handoff-plan - the old name still refers to this skill.
 ---
 
 # Plan Handoff
@@ -27,31 +27,13 @@ into the handoff. Mode flags:
 
 ### 2. Save the plan to a file
 
-Write the full plan to:
-
-    ~/.claude/plans/<repo-name>/<YYYY-MM-DD>-<slug>.md
-
-- `<repo-name>` = basename of the **primary checkout**, derived via
-  `git rev-parse --git-common-dir` (cwd basename if not a repo). Never use the
-  cwd basename inside a linked worktree — that's the lane name, and plans
-  would land in the wrong directory.
-- `<slug>` = short kebab-case name for the work.
-- **Collision guard:** if that plan file already exists, or a live worktree
-  with this name shows up in `supacode worktree list`, suffix the slug
-  (`-2`, `-3`, …) — never overwrite an existing plan file or reuse a live
-  worktree name.
-- The path is deliberately **outside the repo**: a git worktree does not see
-  untracked files from this checkout, but it can always read this absolute path.
-
-Start the file with YAML frontmatter (advisory metadata — live truth always
-comes from git/gh/supacode; the only later write is a merged tombstone added
-by /supacode:complete-feature or /supacode:status --reap):
-
-    ---
-    branch: <type>/<slug>
-    milestone: <milestone name, or free-form>
-    created: <YYYY-MM-DD>
-    ---
+Write the full plan to
+`~/.claude/plans/<repo-name>/<YYYY-MM-DD>-<slug>.md`, with the frontmatter,
+collision guard, and naming rules in
+**`references/plan-file-format.md`** — read it before writing. `<slug>` is a
+short kebab-case name for the work; the reference covers everything else
+(including why the path lives outside the repo, and why the worktree half of
+the collision guard is conditional on Supacode being installed).
 
 Plan file sections (skip any with no real content):
 
@@ -82,7 +64,7 @@ Execute the plan at <absolute plan file path>. Read the whole file before doing 
 4. If reality contradicts the plan on details, adapt and record the deviation for your final summary. If the plan's core approach turns out to be wrong, stop and report back instead of improvising a new design.
 5. Verify per the plan's Verification section before considering any step done.
 6. When the work is complete, run a LOW-EFFORT code review of the full branch diff (use the /code-review skill at low effort if available; otherwise review the diff yourself for bugs and regressions). Fix anything real it finds, commit the fixes, and re-run the tests.
-7. Save durable session learnings to memory NOW, BEFORE opening the PR (per the memory system's own conventions) — new conventions or traps discovered while implementing that the next session would otherwise rediscover the hard way. This worktree may be cleaned up externally after the merge (/supacode:status --reap), so anything not saved before the PR opens can be lost with the session.
+7. Save durable session learnings to memory NOW, BEFORE opening the PR (per the memory system's own conventions) — new conventions or traps discovered while implementing that the next session would otherwise rediscover the hard way. Save early because once this tab closes, the lane becomes eligible for external cleanup (/supacode:status --reap deletes merged lanes that have no open tabs), and anything unsaved goes with it.
 8. Only once the review is clean AND tests pass: immediately before pushing, fetch and rebase onto latest origin/main; if other lanes are running in parallel (the Key constraints will say so), re-resolve any repo-mandated shared files every PR must touch (status boards etc.), keeping your edit to the minimal rows for your lane. Then push the branch and open a PR (follow the repo's CLAUDE.md rules for pushing and PRs — account checks, any required PR flow like /ship). If review findings can't be resolved or tests won't pass, stop and report back instead of opening a PR.
 9. NEVER merge the PR. Merging requires the user's explicit approval, always — leave the PR open for them, and keep this session alive: after they merge, they may run /supacode:complete-feature here to verify the merge, save learnings to memory, and delete this worktree.
 
@@ -116,9 +98,12 @@ print-the-prompt flow.
 
 When `--launch` was given an existing plan file's path, steps 1–2 are already
 done: use that file and its sibling `.prompt.md` (regenerate the prompt file
-from the plan via step 3's template only if the sibling is missing), take
-`<slug>` and the branch from the plan's filename/frontmatter, and start at
-step 2 below.
+from the plan via step 3's template only if the sibling is missing), and start
+at step 2 below. Take the **branch from the plan's `branch:` frontmatter** and
+the slug from its filename — the filename is `<date>-<slug>.md` and carries no
+`feat|fix|chore|docs` prefix, so deriving the branch from it would create an
+unprefixed branch that violates the naming rule the executor is then told to
+follow. Missing `branch:` frontmatter ⇒ stop and say so rather than guessing.
 
 1. **Save the prompt too.** After saving the plan file, write the filled-in
    handoff prompt (the same template as step 3) to a sibling file:

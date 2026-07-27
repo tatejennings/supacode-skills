@@ -1,6 +1,6 @@
 ---
 name: status
-description: Dashboard of every Supacode worktree "lane" for the current repo - branch, PR state, session liveness, clean/dirty, and a per-lane verdict (working, pr-open, merged-reapable, merged-live, stalled, needs-attention). With --reap it also deletes merged, clean, session-dead lanes after strict safety checks - non-interactive and conservative by construction, so wrapping it in a loop is safe. With --paint it tints each lane's Supacode sidebar entry by verdict and marks its title, turning the sidebar itself into a live dashboard. Use when the user says "/supacode:status", "/supacode:status --reap", "/supacode:status --paint", "how are the lanes doing", "status of my worktrees", "any lanes to clean up", "reap merged worktrees", "color-code my worktrees", "paint the lanes", or sets up "/loop 15m /supacode:status --reap --paint". Formerly /supa-status - the old name still refers to this skill.
+description: Dashboard of every Supacode worktree "lane" for the current repo - branch, PR state, session liveness, clean/dirty, and a verdict per lane saying what needs your attention. With --reap it deletes provably-finished lanes after strict safety checks; with --paint it tints each lane's sidebar entry by verdict, turning the Supacode sidebar itself into a live dashboard. Non-interactive and conservative by construction, so looping it is safe. Use when the user says "/supacode:status", "/supacode:status --reap", "/supacode:status --paint", "how are the lanes doing", "status of my worktrees", "any lanes to clean up", "reap merged worktrees", "color-code my worktrees", "paint the lanes", or sets up "/loop 15m /supacode:status --reap --paint". Formerly /supa-status - the old name still refers to this skill.
 ---
 
 # Lane Status (+ Reap)
@@ -22,13 +22,9 @@ Both flags compose: `--reap --paint` reaps first, then paints the survivors.
 
 ## 0. Repo identity
 
-Derive `<repo-name>` from the **primary checkout**, never the cwd:
-
-    git rev-parse --git-common-dir   # → <primary>/.git ; repo-name = basename of <primary>
-
-Running from inside a linked worktree (e.g. `~/.supacode/repos/<repo>/<lane>/`)
-must still yield the primary repo's name — the cwd basename there is the lane
-name, which breaks every lookup below.
+Derive `<repo-name>` from the **primary checkout**, never the cwd — see
+`supacode-cli/references/worktree-identity.md` for the rule and why the cwd
+basename is wrong inside a lane. Derive it once; reuse it throughout.
 
 ## 1. Enumerate lanes
 
@@ -51,32 +47,46 @@ dashboard (and to /supacode:mission's in-flight exclusion). Don't use
 
 ## 2. Derive per-lane facts
 
-Fetch PR state ONCE for the whole repo from the primary checkout, then join
-locally by branch:
+**Short-circuit first:** if the lane set is empty, skip everything below —
+report "no lanes" (after the orphan-plan-file scan, which is cheap and local)
+and stop. A looped `/supacode:status` on a repo with no active lanes should
+not be making network calls.
+
+Otherwise fetch PR state ONCE for the whole repo from the primary checkout,
+then join locally by branch:
 
     gh pr list --state all --limit 100 \
       --json headRefName,number,state,mergedAt,headRefOid,url
 
 If a branch has several PRs, prefer the open one; else the most recently
-updated. Then per lane (git via `-C <decoded-path>`; if you ever need `gh` in
+updated. Then gather per-lane facts — **issue every lane's commands in a
+single message so they run concurrently**, and use these batched forms rather
+than one call per fact (git via `-C <decoded-path>`; if you ever need `gh` in
 a lane, `gh` has no `-C` — use a subshell `(cd <path> && gh …)`):
 
-- **Linked-worktree proof:** `git -C <wt> rev-parse --git-dir` differs from
-  `git -C <wt> rev-parse --git-common-dir`. Equal ⇒ it's a primary checkout
-  that slipped through — drop it from the lane set entirely.
-- **Branch:** `git -C <wt> branch --show-current`. Empty ⇒ detached HEAD ⇒
-  verdict `needs-attention`, never reapable.
-- **Dirty:** `git -C <wt> status --porcelain` non-empty.
-- **Last commit age:** `git -C <wt> log -1 --format=%cr`.
-- **Session:** `supacode tab list -w <id>`. Empty ⇒ session dead. Non-empty ⇒
-  "possibly alive" — tabs are bare UUIDs and a tab can outlive its process, so
-  tab-present is never proof of life, only grounds for caution.
-- **Plan file:** scan `~/.claude/plans/<repo-name>/*.md`, **excluding
-  `*.prompt.md`**. Match YAML frontmatter `worktree:` against the lane's exact
-  ID first (written at launch by /supacode:handoff-plan; immune to branch-name
-  reuse across time), falling back to `branch:` against the lane branch;
-  legacy files without frontmatter match by slug-in-filename ↔ branch suffix
-  (note them as "legacy"). No match ⇒ show "(no plan file)".
+    git -C <wt> rev-parse --git-dir --git-common-dir HEAD   # 3 facts, 1 call
+    git -C <wt> status --porcelain -b                       # branch + dirty
+    git -C <wt> log -1 --format=%cr                         # commit age
+    supacode tab list -w <id>                               # session
+
+That is 4 calls per lane instead of 6, and the first two carry four facts
+between them:
+
+- **Linked-worktree proof:** `--git-dir` differs from `--git-common-dir`.
+  Equal ⇒ it's a primary checkout that slipped through — drop it from the
+  lane set entirely.
+- **HEAD:** the third line, for the `headRefOid` comparison.
+- **Branch and dirty:** `status --porcelain -b` prints `## <branch>...` as its
+  first line, then one line per dirty path — no dirty lines ⇒ clean. A
+  detached HEAD shows as `## HEAD (no branch)` ⇒ verdict `needs-attention`,
+  never reapable.
+- **Session:** empty tab list ⇒ session dead. Non-empty ⇒ "possibly alive" —
+  tabs are bare UUIDs and a tab can outlive its process, so tab-present is
+  never proof of life, only grounds for caution.
+- **Plan file:** match per `handoff-plan/references/plan-file-format.md`
+  (`worktree:` first, then `branch:`, then legacy slug; `*.prompt.md`
+  excluded). Note which key matched — §5 only tombstones exact `worktree:`
+  matches. No match ⇒ show "(no plan file)".
 
 Isolate errors per lane: if any command fails for one lane, give it verdict
 `unknown` (under `needs-attention`) and keep rendering the table — one broken
@@ -95,14 +105,25 @@ Keep the set small; each lane gets exactly one:
 | Verdict | Condition |
 |---|---|
 | `working` | tabs present; PR absent or open |
-| `pr-open` | PR open, session dead-or-alive irrelevant to the user's next action (no finer awaiting-review/awaiting-merge split) — the next action is theirs: review/merge on GitHub |
+| `pr-open` | PR open (tabs irrelevant) |
 | `merged-reapable` | PR MERGED + clean + `HEAD == headRefOid` + **no tabs** |
-| `merged-live` | PR MERGED + checks pass but tabs still present |
-| `stalled` | **no tabs** + no open PR (PR absent or closed-unmerged — abandoned mid-flight; an open PR makes it `pr-open` instead, and commit age alone never triggers this) |
-| `needs-attention` | anything contradictory: dirty + merged, detached HEAD, merged PR with `HEAD != headRefOid` (post-merge commits that deletion would lose; on an open PR, HEAD ahead of the PR head is just unpushed work — normal, not a flag), derivation errors (`unknown`) |
+| `merged-live` | PR MERGED + clean + `HEAD == headRefOid` + tabs present |
+| `stalled` | **no tabs** + no open PR (PR absent or closed-unmerged) |
+| `needs-attention` | anything contradictory: dirty + merged, detached HEAD, merged PR with `HEAD != headRefOid`, derivation errors (`unknown`) |
 
-`working` and `pr-open` overlap on "PR open + tabs present" — that is
-`pr-open` (the PR supersedes; the session is just waiting).
+Resolving overlaps, in order:
+
+1. **`needs-attention` wins over everything** — a contradictory lane is never
+   reported as healthy, and never reaped.
+2. `working` vs `pr-open` on "PR open + tabs present" ⇒ `pr-open`; the PR
+   supersedes, the session is just waiting.
+
+Notes on the conditions: `pr-open` deliberately has no finer
+awaiting-review/awaiting-merge split — either way the next action is yours on
+GitHub. `stalled` means abandoned mid-flight; commit age alone never triggers
+it. Under `needs-attention`, `HEAD != headRefOid` only counts on a **merged**
+PR (post-merge commits deletion would lose) — on an open PR, HEAD ahead of the
+PR head is just unpushed work, which is normal.
 
 ## 4. Output
 
@@ -119,9 +140,11 @@ the next action, e.g.:
 
 ## 5. `--reap` — delete provably-finished lanes
 
-Only lanes with verdict `merged-reapable` are candidates. For each, re-verify
-ALL of these immediately before deletion (yes, again — the world moves between
-scan and delete):
+Only lanes with verdict `merged-reapable` are candidates. For each, confirm
+all five below. Checks **3 and 5 must be re-run immediately before the
+delete** — a dirty file or a reopened tab can appear in the seconds since the
+scan. Checks 1, 2 and 4 can reuse §2's results: filesystem layout cannot
+change, and a merged PR's state and head OID are settled.
 
 1. Linked worktree: `git -C <wt> rev-parse --git-dir` ≠ `--git-common-dir`
    (defense-critical; never delete a primary checkout).
@@ -132,12 +155,18 @@ scan and delete):
    post-merge commits would be silently lost).
 5. `supacode tab list -w <id>` is empty — a lane with ANY tab is never deleted
    unattended, even fully merged (that's `merged-live`: report it instead).
+   Treat this as necessary but **not sufficient**: a tab can outlive its
+   process, so an empty list means "nobody is watching", not "no work is in
+   flight". Checks 2–4 are what actually make deletion safe.
 
 If all five hold, in this order:
 
-1. **Tombstone the plan file** (if matched): add/update frontmatter
-   `status: merged`, `pr: <number>`, `merged: <YYYY-MM-DD>`. Advisory only —
-   git/gh remain the truth.
+1. **Tombstone the plan file** — only when it was matched by the exact
+   `worktree:` key (§2). Add/update frontmatter `status: merged`,
+   `pr: <number>`, `merged: <YYYY-MM-DD>`. Advisory only — git/gh remain the
+   truth. A file matched by the weaker `branch:`/legacy-slug fallback is
+   **reported, never written**: branch names get reused, so a stale plan for
+   an old `fix/auth` would be silently tombstoned by a new one.
 2. **Delete:** `supacode worktree delete -w <id>` using the exact ID string
    from `worktree list`.
 3. **Update stale memories:** if the memory system tracks this lane (an
