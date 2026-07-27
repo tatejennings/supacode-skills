@@ -11,6 +11,18 @@ Facts about the `supacode` CLI must come from live `supacode help <subcommand>`
 output, never from memory. Worktree and repo IDs are URL-encoded absolute
 paths; tab and surface IDs are UUIDs.
 
+**Shared specs live in `references/`, not in copies.** Two rules are read by
+several skills and are dangerous when they drift:
+
+- `supacode-cli/references/worktree-identity.md` — primary-vs-linked worktree
+  proof (deletion safety), repo-name derivation, ID conventions.
+- `handoff-plan/references/plan-file-format.md` — plan file path, frontmatter,
+  match order, collision guard.
+
+Change the reference, not a skill's restatement of it. Repetition elsewhere
+(the launch incantation, "nothing ever merges") is deliberate — an instruction
+present where it's needed can't be missed.
+
 Test without installing:
 
 ```bash

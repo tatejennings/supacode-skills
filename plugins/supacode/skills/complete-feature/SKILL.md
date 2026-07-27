@@ -17,9 +17,10 @@ delete on a failed check — tell the user what to resolve instead (they can
 `supacode worktree archive` manually if they want it out of the sidebar).
 
 1. **This is a disposable linked worktree, not the primary checkout:**
-   - `$SUPACODE_WORKTREE_ID` is set, and
-   - `git rev-parse --git-dir` differs from `git rev-parse --git-common-dir`
-     (equal means primary checkout — NEVER delete that).
+   `$SUPACODE_WORKTREE_ID` is set, and
+   `git rev-parse --git-dir --git-common-dir` returns two different values
+   (equal ⇒ primary checkout — NEVER delete that). Full rule in
+   `supacode-cli/references/worktree-identity.md`.
 2. **The PR is merged:** `gh pr view --json state,url,mergedAt,headRefOid` for
    the current branch reports state `MERGED`. No PR found, or state
    OPEN/CLOSED-unmerged → stop.
@@ -48,14 +49,26 @@ things after the PR opens too.)
 
 ## 3. Tombstone the plan file
 
-If a plan file for this lane exists, mark it merged. Find it by matching the
-current branch against `branch:` frontmatter in `~/.claude/plans/<repo-name>/`
-(repo name = basename of the primary checkout via
-`git rev-parse --git-common-dir`, never this worktree's basename; exclude
-`*.prompt.md`). Add/update frontmatter: `status: merged`, `pr: <number>`,
-`merged: <YYYY-MM-DD>`. No matching file ⇒ skip silently. The tombstone is
-advisory — git/gh remain the truth; /supacode:status uses it to tell a completed
-lane from a crashed one after the worktree is gone.
+If a plan file for this lane exists, mark it merged — matching and tombstone
+fields per `handoff-plan/references/plan-file-format.md`. **Read that
+reference before writing**: this skill always runs inside a linked worktree,
+where using the cwd basename as the repo name silently points the lookup at a
+directory that does not exist.
+
+Match `worktree:` against `$SUPACODE_WORKTREE_ID` (you have it from step 1),
+then write `status: merged`, `pr: <number>`, `merged: <YYYY-MM-DD>` when
+either holds:
+
+- the `worktree:` key matches exactly, or
+- the candidate has **no `worktree:` key at all** and matches by `branch:` —
+  a lane created through the manual `git worktree add` flow, which never
+  writes that key. Absence of the key is a different flow, not an ambiguous
+  match.
+
+Never write when the file has a `worktree:` key that points at a *different*
+lane, even if `branch:` matches: branch names get reused, and that is how an
+unrelated old plan gets marked merged. Say so in the summary instead. No
+matching file ⇒ skip silently.
 
 ## 4. Close-out summary — BEFORE deletion
 

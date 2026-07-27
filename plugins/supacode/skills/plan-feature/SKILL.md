@@ -1,6 +1,6 @@
 ---
 name: plan-feature
-description: Plan a piece of work end-to-end - a roadmap milestone/chunk OR a free-form feature/bug description. Enters plan mode, researches docs and codebase with parallel agents, drafts an execution-ready plan, then adversarially reviews it for completeness, holes, single-context feasibility, and blast radius. When the milestone already links to a written plan file, it adopts that plan verbatim and skips straight to review and handoff instead of re-planning. Usage - /supacode:plan-feature <milestone-or-description> [--auto] [--plan-only] [--siblings <plan-file-paths>]. With --auto it skips the plan-approval gate and chains straight into /supacode:handoff-plan --launch; --plan-only (with --auto) preps the handoff files but launches nothing, for callers like /supacode:mission that launch separately; --siblings adds a cross-lane collision axis to the review. Use when the user says "/supacode:plan-feature A4", "/supacode:plan-feature fix the vent double-tap bug", "plan milestone X", "plan this feature/fix", or "help me plan <chunk>". Formerly /supa-plan-feature - the old name still refers to this skill.
+description: Plan a piece of work end-to-end - a roadmap milestone/chunk OR a free-form feature/bug description. Enters plan mode, researches docs and codebase with parallel agents, drafts an execution-ready plan, then adversarially reviews it for completeness, holes, single-context feasibility, and blast radius. When the milestone already links to a written plan file, it adopts that plan verbatim and skips straight to review and handoff instead of re-planning. With --auto it skips the plan-approval gate and launches the executor lane itself (see the body for --plan-only and --siblings). Use when the user says "/supacode:plan-feature A4", "/supacode:plan-feature fix the vent double-tap bug", "plan milestone X", "plan this feature/fix", or "help me plan <chunk>". Formerly /supa-plan-feature - the old name still refers to this skill.
 ---
 
 # Milestone / Feature Planning
@@ -36,8 +36,9 @@ quicker review — never skip the review entirely.
 - **`--auto` mode:** do NOT enter plan mode — its approval gate cannot be
   auto-approved, and the user has explicitly waived approval. Instead, hold the
   same discipline manually: research and plan only; the ONLY writes allowed are
-  plan/prompt files under `~/.claude/plans/` and the supacode launch commands
-  at the end. Never touch repo files.
+  plan/prompt files under `~/.claude/plans/` and — except under `--plan-only`,
+  which launches nothing — the supacode launch commands at the end. Never
+  touch repo files.
 
 ## 1. Pin down the requirements
 
@@ -131,7 +132,7 @@ while a deferral costs one interactive question.
 Spawn a **fresh** general-purpose agent (not a fork — a cold reader, so it doesn't
 inherit your drafting bias). Give it the full plan text plus pointers to the
 requirements source (milestone definition or the stated acceptance criteria), and
-have it attack on four axes:
+have it attack on five axes (the fifth only when `--siblings` was given):
 
 1. **Completeness** — is every requirement covered by a step? Does every step
    have a verification?
@@ -173,8 +174,11 @@ become ammunition against re-litigation later).
   a fresh worktree context — but don't run it unasked; they may execute inline.
 
 **`--auto` mode:** after folding in the review findings, invoke the
-`supacode:handoff-plan` skill (via the Skill tool) with args `--launch <slug>` so it
-saves the plan, creates the Supacode worktree, and starts the executor session.
+`supacode:handoff-plan` skill (via the Skill tool) with args `--launch <slug>`
+— the bare-slug form, meaning "package the plan from this conversation", as
+opposed to `--launch <absolute plan-file path>` which launches an
+already-saved plan. It saves the plan, creates the Supacode worktree, and
+starts the executor session.
 Then report: the work planned, plan summary, review verdict, worktree/branch,
 plan file path.
 
@@ -196,9 +200,16 @@ these hold:
   not yours; report the finding and let them choose;
 - the work appears already in flight elsewhere;
 - the review's cross-lane axis found real overlap with a sibling plan
-  (`--siblings`);
-- the work overlaps a currently live lane — inside Supacode, check the
-  branches of existing worktrees (`supacode worktree list`) before launching;
+  (`--siblings`).
+
+Two further disqualifiers apply **only when this run will actually launch**
+(i.e. not under `--plan-only`, where no worktree is created and the CLI is
+never touched — a mission subagent must not defer a lane for lacking a
+capability it never needed):
+
+- the work overlaps a currently live lane — check the branches of existing
+  worktrees (`supacode worktree list`) before launching. (Under a mission,
+  the wave already excluded in-flight work, so this is a second net.)
 - not running inside Supacode (no `supacode` CLI / `$SUPACODE_REPO_ID`).
 
 **Mission context:** when this skill runs inside a subagent spawned by

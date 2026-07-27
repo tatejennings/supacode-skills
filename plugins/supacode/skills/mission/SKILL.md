@@ -96,17 +96,28 @@ with the plan file paths of every ready lane. It applies plan-feature's
 cross-lane axis over the *actual plans*: flag any file, subsystem, or test
 baseline that two plans both modify (repo-mandated shared files like status
 boards don't count — the executor contract handles those mechanically at
-push time). For each collision group, keep the lane the user approved first
-and defer the rest with reason "overlaps <lane> on <what>".
+push time). The reviewer **reports collision groups; it does not pick
+winners** — it has only the plan files, not the wave's ordering. You then
+resolve each group yourself: keep the lane that came first in the order you
+presented the options in §4 (a multiSelect answer is a set, not a ranking, so
+presentation order is the only stable tiebreak) and defer the rest with
+reason "overlaps <lane> on <what>".
 
-**Phase C — launch the survivors.** For each remaining lane, in approval
-order, invoke the `supacode:handoff-plan` skill with:
+**Phase C — launch the survivors.** For each remaining lane, in §4
+presentation order, invoke the `supacode:handoff-plan` skill with:
 
     --launch <plan file path>
 
 Launching stays serial on purpose: each `worktree-new --fetch` picks up the
 freshest base, and launches are cheap — the parallelism that matters already
 happened in Phase A.
+
+If a launch does not produce a running session — handoff-plan falls back to
+printing a copy-paste prompt when Supacode is unavailable, and inside a
+subagent nobody would ever see that fence — mark the lane
+`deferred: planned but not launched (<reason>)` and give its plan file path
+in the report. A silently unlaunched lane is the one failure this wave must
+never hide; §1's preflight makes it unlikely, not impossible.
 
 ## 6. Wave report
 
@@ -125,13 +136,17 @@ If any lanes came back `deferred`, ask ONCE with AskUserQuestion
 reason) which of them to open an interactive planning session for. Skip the
 question entirely when nothing was deferred. For each lane the user selects:
 
-    supacode tab new --input 'claude --remote-control "plan-<lane>" "Run /supacode:plan-feature <lane>. A mission deferred this lane because: <reason>. Draft plan file, read it first if present: <path or none>."'
+    supacode tab new --input 'claude --remote-control "plan-<lane>" "Run /supacode:plan-feature <lane>. A mission deferred this lane because: <reason>. A draft plan already exists at <path or none> — if present, read it and UPDATE THAT FILE IN PLACE rather than drafting a new one."'
 
 - The tab opens in the mission's own worktree (the primary checkout —
   `tab new` defaults to `$SUPACODE_WORKTREE_ID`), which is right: planning
   needs no worktree; /supacode:handoff-plan creates one at launch time.
 - Keep the pointer prompt to that single line; strip quotes/newlines from the
   reason so it survives the nested shell quoting.
+- The update-in-place instruction matters: a lane deferred *after* drafting
+  already has a saved plan and `.prompt.md` pair. Drafting fresh would trip
+  handoff-plan's collision guard into a `-2` slug, leaving two plans for one
+  lane and a stale orphaned prompt file that /supacode:status would match.
 - Do NOT pass `--permission-mode auto` here — unlike executor launches, this
   session exists precisely so the user can answer its questions; plan mode
   gates writes, and the user will be present.
